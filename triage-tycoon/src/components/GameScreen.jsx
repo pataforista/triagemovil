@@ -3,8 +3,8 @@ import PatientCard from './PatientCard';
 import { generatePatient } from '../data/patients';
 import Supervisor from './Supervisor';
 import VolumetricBeam from './ui/VolumetricBeam';
-import ElectricBorder from './ui/ElectricBorder';
 import { playSuccess, playError, playAlarm } from '../utils/audio';
+import { vibrateSuccess, vibrateError, vibrateWarning } from '../utils/haptics';
 
 export default function GameScreen({ levelData, onLevelComplete }) {
     const [score, setScore] = useState(0);
@@ -21,7 +21,10 @@ export default function GameScreen({ levelData, onLevelComplete }) {
             onLevelComplete(score);
             return;
         }
-        if (timeLeft <= 10 && timeLeft % 2 === 0) playAlarm(); // Alarm near end
+        if (timeLeft <= 10 && timeLeft % 2 === 0) {
+            playAlarm();
+            vibrateWarning();
+        }
         const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
         return () => clearInterval(timer);
     }, [timeLeft]);
@@ -70,10 +73,8 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 if (target === 'UCE') currentAlert = `🔴 ¡SALVADO! Triage correcto a Choque. (+${points})`;
 
                 success = true;
-                // Randomly trigger supervisor praise
                 if (Math.random() > 0.7) newState = "GOOD";
             } else {
-                // Penalizaciones pesadas por errores graves
                 if (target === 'ALTA' && p.type === 'UCE') {
                     points = -100;
                     currentAlert = `💀 ¡NEGLIGENCIA! Paciente crítico enviado a casa. (-100)`;
@@ -90,17 +91,14 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                     points = -20;
                     currentAlert = `✖ Triage incorrecto. Revisar el cuadro clínico. (-20)`;
                 }
-
                 newState = "BAD";
             }
         }
 
-        // 2. Lógica de Camas (Solo si el destino es OBS o UCE)
-        let isBedPenalty = false;
+        // 2. Lógica de Camas
         if (target === 'OBS') {
             const idx = bedsOBS.indexOf(null);
             if (idx === -1) {
-                isBedPenalty = true;
                 points = -15;
                 currentAlert = `⚠ ¡OBS LLENO! (-15 pts) - No hay espacio para ${p.name}.`;
                 newState = "BAD";
@@ -109,12 +107,11 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 let newBeds = [...bedsOBS]; newBeds[idx] = p; setBedsOBS(newBeds);
                 setTimeout(() => {
                     setBedsOBS(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
-                }, 6000); // 6s para OBS
+                }, 6000); 
             }
         } else if (target === 'UCE') {
             const idx = bedsUCE.indexOf(null);
             if (idx === -1) {
-                isBedPenalty = true;
                 points = -15;
                 currentAlert = `⚠ ¡UCE LLENO! (-15 pts) - ¡Emergencia saturada!`;
                 newState = "BAD";
@@ -123,29 +120,29 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 let newBeds = [...bedsUCE]; newBeds[idx] = p; setBedsUCE(newBeds);
                 setTimeout(() => {
                     setBedsUCE(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
-                }, 12000); // 12s para UCE (más tiempo bloqueado)
+                }, 12000);
             }
         }
 
-        // Audio Triggers
-        if (success) playSuccess();
-        else playError();
+        // Audio & Haptic Triggers
+        if (success) {
+            playSuccess();
+            vibrateSuccess();
+        } else {
+            playError();
+            vibrateError();
+        }
 
-        // Muestra la alerta, priorizando la de cama llena si aplica
         pushAlert(currentAlert);
-
         if (newState) setSupervisorState(newState);
-
         setScore(s => Math.max(0, s + points));
         setWaiting(prev => prev.filter(x => x.id !== p.id));
     }
 
-    // Progreso visual
     const progressPercent = Math.min(100, (score / levelData.goal) * 100);
 
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-slate-950">
-            {/* Background Layers */}
             <VolumetricBeam 
                 color="#0f172a" 
                 fogIntensity={0.2} 
@@ -153,11 +150,8 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 className="opacity-40" 
             />
             <div className="game-background" />
-
-            {/* Supervisor Layer */}
             <Supervisor state={supervisorState} score={score} />
 
-            {/* --- HUD: VIBRANT PILLS --- */}
             <header className="p-4 pt-6 z-20 flex flex-col gap-4">
                 <div className="flex justify-between items-center gap-3">
                     <div className="hud-pill flex items-center gap-2">
@@ -191,15 +185,13 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 </div>
             </header>
 
-            {/* --- ATENCIÓN: ALERTAS FLOTANTES --- */}
             {alert && (
                 <div key={Date.now()} className="alert-float">
                     {alert}
                 </div>
             )}
 
-            {/* --- PATIENT QUEUE (Área Scrollable) --- */}
-            <main className="flex-1 overflow-y-auto px-4 pt-2 scroll-hide z-10 pb-40">
+            <main className="flex-1 overflow-y-auto px-4 pt-2 scroll-hide z-10 pb-60">
                 <div className="flex items-center gap-2 mb-3">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
                     <h3 className="text-slate-400 text-[10px] font-bold tracking-[0.3em] uppercase">Sala de Espera ({waiting.length})</h3>
@@ -217,10 +209,8 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 )}
             </main>
 
-            {/* --- BEDS / MONITORING AREA (Modern Dashboard) --- */}
             <footer className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-30 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
                 <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                    {/* Observation Monitor */}
                     <div className="glass p-3 border border-yellow-500/20 bg-yellow-500/5">
                         <div className="flex justify-between items-center mb-2 px-1">
                             <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest">OBS MONITOR</span>
@@ -235,7 +225,6 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                         </div>
                     </div>
 
-                    {/* UCE Critical Monitor */}
                     <div className="glass p-3 border border-rose-500/20 bg-rose-500/5">
                         <div className="flex justify-between items-center mb-2 px-1">
                             <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">UCE CRITICAL</span>

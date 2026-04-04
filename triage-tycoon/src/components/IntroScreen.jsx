@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import InteractiveOrb from './ui/InteractiveOrb';
 import VolumetricBeam from './ui/VolumetricBeam';
-import TutorialModal from './TutorialModal';
 import { playPop, playSuccess } from '../utils/audio';
+import { vibratePop, vibrateSuccess } from '../utils/haptics';
+import TutorialModal from './TutorialModal';
 
 export default function IntroScreen({ onStart }) {
     const [showTutorial, setShowTutorial] = useState(false);
 
     const handleStart = () => {
         playSuccess();
+        vibrateSuccess();
         onStart();
     };
 
     const handleTutorial = () => {
         playPop();
+        vibratePop();
         setShowTutorial(true);
     };
 
