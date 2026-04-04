@@ -54,12 +54,12 @@ export default function GameScreen({ levelData, onLevelComplete }) {
         if (isTrap) {
             if (target === p.real) {
                 points = p.score + 50;
-                currentAlert = `🎯 ¡BIEN HECHO! Era ${p.diag} (Médico). (+${points})`;
+                currentAlert = `🎯 ¡EXCELENTE OJO! Era ${p.diag} (Médico). (+${points})`;
                 newState = "GOOD";
                 success = true;
             } else {
-                points = -40;
-                currentAlert = `🚨 ¡FALLO CRÍTICO! Era ${p.diag} (Médico). (-${40})`;
+                points = -50;
+                currentAlert = `🚨 ¡FALLO CRÍTICO! Era ${p.diag}. Ignoraste los signos vitales. (-50)`;
                 newState = "BAD";
             }
         } else {
@@ -73,11 +73,23 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 // Randomly trigger supervisor praise
                 if (Math.random() > 0.7) newState = "GOOD";
             } else {
-                points = -20;
-                if (target === 'ALTA' && p.type === 'UCE') currentAlert = `¡ERROR! Paciente UCE enviado a casa. (-${20})`;
-                else if (target === 'OBS' && p.type === 'UCE') currentAlert = `¡CUIDADO! Es grave, OBS no basta. (-${20})`;
-                else if (target === 'UCE' && p.type === 'ALTA') currentAlert = `¡SOBRECARGA! Gasto de cama UCE innecesario. (-${20})`;
-                else currentAlert = `✖ Triage incorrecto. Revisar el cuadro clínico. (-${20})`;
+                // Penalizaciones pesadas por errores graves
+                if (target === 'ALTA' && p.type === 'UCE') {
+                    points = -100;
+                    currentAlert = `💀 ¡NEGLIGENCIA! Paciente crítico enviado a casa. (-100)`;
+                } else if (target === 'OBS' && p.type === 'UCE') {
+                    points = -40;
+                    currentAlert = `🚨 ¡POCA PRECAUCIÓN! Es grave, OBS no basta. (-40)`;
+                } else if (target === 'ALTA' && p.type === 'OBS') {
+                    points = -30;
+                    currentAlert = `⚠ Error: El paciente aún requiere monitoreo. (-30)`;
+                } else if (target === 'UCE' && p.type === 'ALTA') {
+                    points = -25;
+                    currentAlert = `🏥 ¡SOBRECARGA! Cama UCE desperdiciada. (-25)`;
+                } else {
+                    points = -20;
+                    currentAlert = `✖ Triage incorrecto. Revisar el cuadro clínico. (-20)`;
+                }
 
                 newState = "BAD";
             }
@@ -90,28 +102,28 @@ export default function GameScreen({ levelData, onLevelComplete }) {
             if (idx === -1) {
                 isBedPenalty = true;
                 points = -15;
-                currentAlert = `⚠ ¡OBS LLENO! (-15 pts) - No había dónde poner a ${p.name}.`;
+                currentAlert = `⚠ ¡OBS LLENO! (-15 pts) - No hay espacio para ${p.name}.`;
                 newState = "BAD";
                 success = false;
             } else {
                 let newBeds = [...bedsOBS]; newBeds[idx] = p; setBedsOBS(newBeds);
                 setTimeout(() => {
                     setBedsOBS(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
-                }, 5000);
+                }, 6000); // 6s para OBS
             }
         } else if (target === 'UCE') {
             const idx = bedsUCE.indexOf(null);
             if (idx === -1) {
                 isBedPenalty = true;
                 points = -15;
-                currentAlert = `⚠ ¡UCE LLENO! (-15 pts) - No había dónde poner a ${p.name}.`;
+                currentAlert = `⚠ ¡UCE LLENO! (-15 pts) - ¡Emergencia saturada!`;
                 newState = "BAD";
                 success = false;
             } else {
                 let newBeds = [...bedsUCE]; newBeds[idx] = p; setBedsUCE(newBeds);
                 setTimeout(() => {
                     setBedsUCE(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
-                }, 8000);
+                }, 12000); // 12s para UCE (más tiempo bloqueado)
             }
         }
 
@@ -132,92 +144,113 @@ export default function GameScreen({ levelData, onLevelComplete }) {
     const progressPercent = Math.min(100, (score / levelData.goal) * 100);
 
     return (
-        <div className="flex flex-col h-full relative overflow-hidden">
-            {/* Background Effect */}
-            <VolumetricBeam
-                color="#0f172a"
-                fogIntensity={0.2}
-                flowSpeed={0.2}
-                className="opacity-50"
+        <div className="flex flex-col h-full relative overflow-hidden bg-slate-950">
+            {/* Background Layers */}
+            <VolumetricBeam 
+                color="#0f172a" 
+                fogIntensity={0.2} 
+                flowSpeed={0.2} 
+                className="opacity-40" 
             />
+            <div className="game-background" />
 
+            {/* Supervisor Layer */}
             <Supervisor state={supervisorState} score={score} />
 
-            {/* Header / HUD */}
-            <div className="p-4 bg-slate-800/90 backdrop-blur border-b border-slate-700 shadow-xl z-20 relative">
-                <div className="flex justify-between text-xs hud-font text-slate-400 mb-2 uppercase tracking-wide">
-                    <span>{levelData.name}</span>
-                    <span>Meta: ${levelData.goal}</span>
-                </div>
-
-                {/* Barra de Progreso */}
-                <div className="relative w-full h-5 bg-slate-950 rounded-full overflow-hidden border border-slate-600 mb-2 shadow-inner">
-                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-500 ease-out"
-                        style={{ width: `${progressPercent}%` }}></div>
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white shadow-black drop-shadow-md">
-                        {levelData.meal}
+            {/* --- HUD: VIBRANT PILLS --- */}
+            <header className="p-4 pt-6 z-20 flex flex-col gap-4">
+                <div className="flex justify-between items-center gap-3">
+                    <div className="hud-pill flex items-center gap-2">
+                        <span className="text-[10px] text-white/50 font-black uppercase">Cash</span>
+                        <span className="text-xl font-black text-green-400 hud-font">${score}</span>
                     </div>
-                </div>
-
-                <div className="flex justify-between items-end mt-1">
-                    <div className="text-4xl font-bold text-white neon-text leading-none">${score}</div>
-                    <div className={`text-2xl hud-font font-bold leading-none ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
-                        00:{String(timeLeft).padStart(2, '0')}
-                    </div>
-                </div>
-            </div>
-
-            {/* Alerta Flotante */}
-            {alert && <div className="alert-float text-white font-bold text-sm">{alert}</div>}
-
-            {/* Área Scrollable */}
-            <div className="flex-1 overflow-y-auto p-3 scroll-hide pb-24 z-10 relative">
-
-                {/* Pacientes en Espera */}
-                <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
-                        <h3 className="text-slate-400 text-xs font-bold tracking-widest uppercase">Sala de Espera ({waiting.length})</h3>
-                    </div>
-
-                    {waiting.length === 0 && (
-                        <div className="text-center py-10 opacity-30">
-                            <div className="text-4xl mb-2">☕</div>
-                            <p>Sala vacía... por ahora.</p>
+                    <div className="flex-1">
+                        <div className="h-6 bg-white/5 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
+                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 via-cyan-400 to-emerald-400 transition-all duration-700 ease-out" 
+                                 style={{ width: `${progressPercent}%` }} />
+                            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white px-2 uppercase tracking-tighter mix-blend-difference overflow-hidden whitespace-nowrap">
+                                {levelData.meal}
+                            </div>
                         </div>
-                    )}
-
-                    <div className="space-y-3">
-                        {waiting.map(p => (
-                            <PatientCard key={p.id} p={p} onAssign={handleAssign} />
-                        ))}
+                    </div>
+                    <div className="hud-pill flex items-center gap-2">
+                        <span className="text-[10px] text-white/50 font-black uppercase">Time</span>
+                        <span className={`text-xl font-black hud-font ${timeLeft < 15 ? 'text-rose-500 animate-pulse' : 'text-yellow-400'}`}>
+                            {timeLeft}s
+                        </span>
                     </div>
                 </div>
 
-                {/* Camas Visuales */}
-                <div className="grid grid-cols-2 gap-4 pb-4">
-                    <div className="glass p-2 border-t-2 border-t-yellow-500 bg-slate-900/40">
-                        <h3 className="text-yellow-500 text-[10px] font-bold uppercase mb-2 text-center">Observación</h3>
-                        <div className="space-y-2">
+                <div className="flex justify-between items-end border-b border-white/10 pb-2">
+                    <div>
+                        <h1 className="neon-text text-xl tracking-tighter leading-none">{levelData.name}</h1>
+                        <p className="text-[9px] text-cyan-400 uppercase font-black tracking-[0.2em] mt-1 opacity-70">
+                            Meta Objetivo: <span className="text-white">${levelData.goal}</span>
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            {/* --- ATENCIÓN: ALERTAS FLOTANTES --- */}
+            {alert && (
+                <div key={Date.now()} className="alert-float">
+                    {alert}
+                </div>
+            )}
+
+            {/* --- PATIENT QUEUE (Área Scrollable) --- */}
+            <main className="flex-1 overflow-y-auto px-4 pt-2 scroll-hide z-10 pb-40">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
+                    <h3 className="text-slate-400 text-[10px] font-bold tracking-[0.3em] uppercase">Sala de Espera ({waiting.length})</h3>
+                </div>
+
+                {waiting.map(p => (
+                    <PatientCard key={p.id} p={p} onAssign={handleAssign} />
+                ))}
+
+                {waiting.length === 0 && (
+                    <div className="h-64 flex flex-col items-center justify-center text-slate-500 opacity-20 animate-float">
+                        <div className="text-8xl mb-4">🏥</div>
+                        <p className="hud-font text-xs uppercase tracking-[0.4em]">Standby Loop...</p>
+                    </div>
+                )}
+            </main>
+
+            {/* --- BEDS / MONITORING AREA (Modern Dashboard) --- */}
+            <footer className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-30 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                    {/* Observation Monitor */}
+                    <div className="glass p-3 border border-yellow-500/20 bg-yellow-500/5">
+                        <div className="flex justify-between items-center mb-2 px-1">
+                            <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest">OBS MONITOR</span>
+                            <span className="text-[9px] text-white/30 hud-font">{bedsOBS.filter(b => b).length}/{levelData.beds}</span>
+                        </div>
+                        <div className="flex gap-1.5 justify-center">
                             {bedsOBS.map((b, i) => (
-                                <div key={i} className={`h-10 rounded border flex items-center justify-center text-lg transition-all ${b ? 'bg-yellow-900/40 border-yellow-500 text-white' : 'bg-slate-800/30 border-dashed border-slate-700 text-slate-600'}`}>
-                                    {b ? b.sprite : <span className="text-[10px]">LIBRE</span>}
+                                <div key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 border-2 ${b ? 'bg-yellow-500/20 border-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse' : 'bg-white/5 border-white/10 opacity-10'}`}>
+                                    {b ? b.sprite : ''}
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <div className="glass p-2 border-t-2 border-t-red-500 bg-slate-900/40">
-                        <h3 className="text-red-500 text-[10px] font-bold uppercase mb-2 text-center">Choque / UCE</h3>
-                        <div className="space-y-2">
+
+                    {/* UCE Critical Monitor */}
+                    <div className="glass p-3 border border-rose-500/20 bg-rose-500/5">
+                        <div className="flex justify-between items-center mb-2 px-1">
+                            <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">UCE CRITICAL</span>
+                            <span className="text-[9px] text-white/30 hud-font">{bedsUCE.filter(b => b).length}/{levelData.uce}</span>
+                        </div>
+                        <div className="flex gap-1.5 justify-center">
                             {bedsUCE.map((b, i) => (
-                                <div key={i} className={`h-10 rounded border flex items-center justify-center text-lg transition-all ${b ? 'bg-red-900/40 border-red-500 text-white' : 'bg-slate-800/30 border-dashed border-slate-700 text-slate-600'}`}>
-                                    {b ? b.sprite : <span className="text-[10px]">LIBRE</span>}
+                                <div key={i} className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all duration-300 border-2 ${b ? 'bg-rose-500/20 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.4)] critical-pulse' : 'bg-white/5 border-white/10 opacity-5'}`}>
+                                    {b ? b.sprite : ''}
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
-            </div>
+            </footer>
         </div>
     );
 }
