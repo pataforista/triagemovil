@@ -1,0 +1,8 @@
+name = "triagemovil"
+compatibility_date = "2024-04-01"
+# No explicit project ID needed for simple Pages deployment,
+# Cloudflare will use these settings when connected to your repo.
+
+[pages]
+build_command = "npm run build"
+build_output_directory = "dist"
