@@ -42,8 +42,9 @@ export default function IntroScreen({ onStart }) {
             </div>
 
             <div className="z-10 relative w-full max-w-sm">
-                <h1 className="text-5xl font-black neon-text mb-1 tracking-tighter italic">TRIAGE</h1>
-                <h1 className="text-5xl font-black neon-text text-cyan-400 mb-4 tracking-tighter">TYCOON</h1>
+                <h1 className="text-5xl font-black neon-text tracking-tighter italic mb-4">
+                    TRIAGE <span className="block text-cyan-400 not-italic font-black">TYCOON</span>
+                </h1>
                 
                 <div className="hud-pill inline-block mb-10 border-cyan-500/30">
                     <span className="text-[10px] text-cyan-300 font-black uppercase tracking-[0.4em]">Resident Edition v2.0</span>

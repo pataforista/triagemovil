@@ -1,0 +1,27 @@
+# PWA Service Worker - never cache to ensure immediate updates
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+
+# PWA Manifest - never cache to ensure immediate updates
+/manifest.webmanifest
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+
+# Pre-cached icons and offline page assets
+/favicon.ico
+  Cache-Control: public, max-age=0, must-revalidate
+/pwa-64x64.png
+  Cache-Control: public, max-age=604800, must-revalidate
+/pwa-192x192.png
+  Cache-Control: public, max-age=604800, must-revalidate
+/pwa-512x512.png
+  Cache-Control: public, max-age=604800, must-revalidate
+/maskable-icon-512x512.png
+  Cache-Control: public, max-age=604800, must-revalidate
+/apple-touch-icon-180x180.png
+  Cache-Control: public, max-age=604800, must-revalidate
+
+# Hashed production bundles (JS, CSS) - cache forever since name changes on edit
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

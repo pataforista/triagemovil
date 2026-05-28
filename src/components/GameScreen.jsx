@@ -13,6 +13,7 @@ export default function GameScreen({ levelData, onLevelComplete }) {
     const [bedsOBS, setBedsOBS] = useState(Array(levelData.beds).fill(null));
     const [bedsUCE, setBedsUCE] = useState(Array(levelData.uce).fill(null));
     const [alert, setAlert] = useState(null);
+    const [alertKey, setAlertKey] = useState(0);
     const [supervisorState, setSupervisorState] = useState('START'); // START, GOOD, BAD, COMBO
 
     // Timer Logic
@@ -42,8 +43,8 @@ export default function GameScreen({ levelData, onLevelComplete }) {
     }, [levelData, waiting.length]);
 
     function pushAlert(msg) {
-        setAlert(null);
-        setTimeout(() => setAlert(msg), 10);
+        setAlertKey(k => k + 1);
+        setAlert(msg);
     }
 
     function handleAssign(p, target) {
@@ -57,12 +58,12 @@ export default function GameScreen({ levelData, onLevelComplete }) {
         if (isTrap) {
             if (target === p.real) {
                 points = p.score + 50;
-                currentAlert = `🎯 ¡EXCELENTE OJO! Era ${p.diag} (Médico). (+${points})`;
+                currentAlert = `🎯 ¡EXCELENTE OJO CLÍNICO! Detectaste trampa: Era ${p.diag} (requería ${p.real}). (+${points})`;
                 newState = "GOOD";
                 success = true;
             } else {
                 points = -50;
-                currentAlert = `🚨 ¡FALLO CRÍTICO! Era ${p.diag}. Ignoraste los signos vitales. (-50)`;
+                currentAlert = `🚨 ¡FALLO DE TRIAJE TRAMPA! Era ${p.diag} y requería ${p.real}. ¡Ignoraste signos vitales! (-50)`;
                 newState = "BAD";
             }
         } else {
@@ -141,60 +142,95 @@ export default function GameScreen({ levelData, onLevelComplete }) {
 
     const progressPercent = Math.min(100, (score / levelData.goal) * 100);
 
+    const getThemeColor = (levelId) => {
+        switch (levelId) {
+            case 1: return "#2dd4bf"; // Mint/Teal
+            case 2: return "#a78bfa"; // Violet/Purple
+            case 3: return "#3b82f6"; // Royal Blue
+            case 4: return "#06b6d4"; // Cyan
+            case 5: return "#f59e0b"; // Gold/Amber
+            case 6: return "#f43f5e"; // Pink/Rose
+            case 7: return "#0d9488"; // Dark Teal
+            case 8: return "#d946ef"; // Fuchsia/Purple
+            default: return "#22d3ee";
+        }
+    };
+
+    const themeColor = getThemeColor(levelData.id);
+
     return (
-        <div className="flex flex-col h-full relative overflow-hidden bg-slate-950">
+        <div className="flex flex-col h-full relative overflow-hidden bg-slate-950 hologram-scan">
+            {/* Dynamic Volumetric Beam matching Level Theme */}
             <VolumetricBeam 
-                color="#0f172a" 
-                fogIntensity={0.2} 
-                flowSpeed={0.2} 
-                className="opacity-40" 
+                color={themeColor} 
+                fogIntensity={0.25} 
+                flowSpeed={0.22} 
+                className="opacity-45" 
             />
             <div className="game-background" />
             <Supervisor state={supervisorState} score={score} />
 
-            <header className="p-4 pt-6 z-20 flex flex-col gap-4">
+            {/* Futuristic Holographic Medical Header */}
+            <header className="p-4 pt-6 z-20 flex flex-col gap-3">
                 <div className="flex justify-between items-center gap-3">
-                    <div className="hud-pill flex items-center gap-2">
-                        <span className="text-[10px] text-white/50 font-black uppercase">Cash</span>
-                        <span className="text-xl font-black text-green-400 hud-font">${score}</span>
+                    {/* Cash balance display */}
+                    <div className="hud-pill flex items-center gap-2 bg-slate-950/60 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                        <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider">CASH/GUARDIA</span>
+                        <span className="text-lg font-black text-emerald-400 hud-font leading-none">${score}</span>
                     </div>
+
+                    {/* Medical progress bar */}
                     <div className="flex-1">
-                        <div className="h-6 bg-white/5 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
-                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 via-cyan-400 to-emerald-400 transition-all duration-700 ease-out" 
-                                 style={{ width: `${progressPercent}%` }} />
-                            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white px-2 uppercase tracking-tighter mix-blend-difference overflow-hidden whitespace-nowrap">
-                                {levelData.meal}
+                        <div className="h-5 bg-slate-950/80 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
+                            <div 
+                                className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-600 via-cyan-400 to-emerald-400 transition-all duration-700 ease-out" 
+                                style={{ 
+                                    width: `${progressPercent}%`,
+                                    boxShadow: '0 0 10px rgba(34, 211, 238, 0.5)'
+                                }} 
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white px-2 uppercase tracking-tighter mix-blend-difference overflow-hidden whitespace-nowrap">
+                                PREMIO: {levelData.meal}
                             </div>
                         </div>
                     </div>
-                    <div className="hud-pill flex items-center gap-2">
-                        <span className="text-[10px] text-white/50 font-black uppercase">Time</span>
-                        <span className={`text-xl font-black hud-font ${timeLeft < 15 ? 'text-rose-500 animate-pulse' : 'text-yellow-400'}`}>
+
+                    {/* Timer with pulsing ECG line */}
+                    <div className="hud-pill flex items-center gap-2 bg-slate-950/60 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]">
+                        <svg viewBox="0 0 100 20" className={`w-8 h-4 transition-all duration-300 ${timeLeft < 15 ? 'text-rose-500 animate-[ping_0.5s_infinite]' : 'text-cyan-400 opacity-60'}`}>
+                            <path d="M 0 10 L 25 10 L 32 3 L 40 17 L 48 10 L 100 10" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className={`text-lg font-black hud-font leading-none ${timeLeft < 15 ? 'text-rose-500 animate-pulse' : 'text-yellow-400'}`}>
                             {timeLeft}s
                         </span>
                     </div>
                 </div>
 
-                <div className="flex justify-between items-end border-b border-white/10 pb-2">
+                {/* Level details & Goal display */}
+                <div className="flex justify-between items-end border-b border-white/10 pb-1.5">
                     <div>
-                        <h1 className="neon-text text-xl tracking-tighter leading-none">{levelData.name}</h1>
-                        <p className="text-[9px] text-cyan-400 uppercase font-black tracking-[0.2em] mt-1 opacity-70">
-                            Meta Objetivo: <span className="text-white">${levelData.goal}</span>
+                        <h1 className="text-lg font-extrabold text-white tracking-tight leading-tight">{levelData.name}</h1>
+                        <p className="text-[8px] text-cyan-400 uppercase font-black tracking-[0.2em] mt-0.5 opacity-80">
+                            Meta Objetivo: <span className="text-white font-extrabold">${levelData.goal}</span>
                         </p>
+                    </div>
+                    <div className="text-[8px] hud-font text-white/40 tracking-wider">
+                        DEPT: EMER-R1-0{levelData.id}
                     </div>
                 </div>
             </header>
 
             {alert && (
-                <div key={Date.now()} className="alert-float">
+                <div key={alertKey} className="alert-float">
                     {alert}
                 </div>
             )}
 
-            <main className="flex-1 overflow-y-auto px-4 pt-2 scroll-hide z-10 pb-60">
+            {/* Waiting list main area */}
+            <main className="flex-1 overflow-y-auto px-4 pt-1.5 scroll-hide z-10 pb-56 custom-scrollbar">
                 <div className="flex items-center gap-2 mb-3">
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
-                    <h3 className="text-slate-400 text-[10px] font-bold tracking-[0.3em] uppercase">Sala de Espera ({waiting.length})</h3>
+                    <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shadow-[0_0_8px_rgba(52,211,153,1)]"></div>
+                    <h3 className="text-slate-400 text-[9px] font-bold tracking-[0.25em] uppercase">Pacientes en Cola ({waiting.length})</h3>
                 </div>
 
                 {waiting.map(p => (
@@ -202,38 +238,79 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 ))}
 
                 {waiting.length === 0 && (
-                    <div className="h-64 flex flex-col items-center justify-center text-slate-500 opacity-20 animate-float">
-                        <div className="text-8xl mb-4">🏥</div>
-                        <p className="hud-font text-xs uppercase tracking-[0.4em]">Standby Loop...</p>
+                    <div className="h-64 flex flex-col items-center justify-center text-slate-500 opacity-20">
+                        <div className="text-7xl mb-4 animate-[bounce_2s_infinite]">🏥</div>
+                        <p className="hud-font text-[10px] uppercase tracking-[0.4em] animate-pulse">Telemetry Loop Standby...</p>
                     </div>
                 )}
             </main>
 
-            <footer className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-30 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+            {/* Bottom telemetry central monitor ward */}
+            <footer className="absolute bottom-0 left-0 right-0 p-4 pb-6 z-30 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent">
                 <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                    <div className="glass p-3 border border-yellow-500/20 bg-yellow-500/5">
+                    {/* Observation Ward Monitor */}
+                    <div className="glass p-3 border border-yellow-500/20 bg-slate-950/70 backdrop-blur-md relative overflow-hidden">
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest">OBS MONITOR</span>
-                            <span className="text-[9px] text-white/30 hud-font">{bedsOBS.filter(b => b).length}/{levelData.beds}</span>
+                            <span className="text-[8px] font-bold text-yellow-500 uppercase tracking-widest flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-ping"></span>
+                                OBS MONITOR
+                            </span>
+                            <span className="text-[9px] text-white/40 hud-font font-bold">{bedsOBS.filter(b => b).length}/{levelData.beds}</span>
                         </div>
+                        
                         <div className="flex gap-1.5 justify-center">
                             {bedsOBS.map((b, i) => (
-                                <div key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 border-2 ${b ? 'bg-yellow-500/20 border-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse' : 'bg-white/5 border-white/10 opacity-10'}`}>
-                                    {b ? b.sprite : ''}
+                                <div 
+                                    key={b ? b.id : `empty-obs-${i}`} 
+                                    className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center text-xl transition-all duration-300 border relative overflow-hidden ${
+                                        b 
+                                            ? 'bg-yellow-500/10 border-yellow-500/70 shadow-[0_0_12px_rgba(245,158,11,0.25)]' 
+                                            : 'bg-slate-950/80 border-white/5 opacity-30 border-dashed'
+                                    }`}
+                                >
+                                    {b ? (
+                                        <>
+                                            <span className="animate-float z-10">{b.sprite}</span>
+                                            {/* Synchronous CSS progress bar over exactly 6 seconds */}
+                                            <div className="absolute bottom-0 left-0 h-[3px] bg-yellow-500 animate-shrink-6s rounded-b-xl" />
+                                        </>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-700 font-bold hud-font">0{i+1}</span>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="glass p-3 border border-rose-500/20 bg-rose-500/5">
+                    {/* UCE Critical Ward Monitor */}
+                    <div className="glass p-3 border border-rose-500/20 bg-slate-950/70 backdrop-blur-md relative overflow-hidden">
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">UCE CRITICAL</span>
-                            <span className="text-[9px] text-white/30 hud-font">{bedsUCE.filter(b => b).length}/{levelData.uce}</span>
+                            <span className="text-[8px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                UCE SHOCK
+                            </span>
+                            <span className="text-[9px] text-white/40 hud-font font-bold">{bedsUCE.filter(b => b).length}/{levelData.uce}</span>
                         </div>
+
                         <div className="flex gap-1.5 justify-center">
                             {bedsUCE.map((b, i) => (
-                                <div key={i} className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all duration-300 border-2 ${b ? 'bg-rose-500/20 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.4)] critical-pulse' : 'bg-white/5 border-white/10 opacity-5'}`}>
-                                    {b ? b.sprite : ''}
+                                <div 
+                                    key={b ? b.id : `empty-uce-${i}`} 
+                                    className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center text-xl transition-all duration-300 border relative overflow-hidden ${
+                                        b 
+                                            ? 'bg-rose-500/10 border-rose-500/70 shadow-[0_0_15px_rgba(244,63,94,0.35)] critical-pulse' 
+                                            : 'bg-slate-950/80 border-white/5 opacity-30 border-dashed'
+                                    }`}
+                                >
+                                    {b ? (
+                                        <>
+                                            <span className="critical-pulse z-10">{b.sprite}</span>
+                                            {/* Synchronous CSS progress bar over exactly 12 seconds */}
+                                            <div className="absolute bottom-0 left-0 h-[3px] bg-rose-500 animate-shrink-12s rounded-b-xl" />
+                                        </>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-700 font-bold hud-font">0{i+1}</span>
+                                    )}
                                 </div>
                             ))}
                         </div>

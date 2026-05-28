@@ -32,19 +32,26 @@ const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 export default function Supervisor({ state, score }) {
     const [msg, setMsg] = useState("");
     const [visible, setVisible] = useState(false);
+    const [triggerShake, setTriggerShake] = useState(false);
 
     // React to state changes
     useEffect(() => {
         let text = "";
         if (state === 'START') text = random(QUOTES.start);
         else if (state === 'GOOD') text = random(QUOTES.good);
-        else if (state === 'BAD') text = random(QUOTES.bad);
+        else if (state === 'BAD') {
+            text = random(QUOTES.bad);
+            // Trigger physical shake animation when the doctor gets angry
+            setTriggerShake(true);
+            const shakeTimer = setTimeout(() => setTriggerShake(false), 500);
+            return () => clearTimeout(shakeTimer);
+        }
         else if (state === 'COMBO') text = random(QUOTES.combo);
 
         if (text) {
             setMsg(text);
             setVisible(true);
-            const timer = setTimeout(() => setVisible(false), 4000);
+            const timer = setTimeout(() => setVisible(false), 5000);
             return () => clearTimeout(timer);
         }
     }, [state, score]);
@@ -59,16 +66,73 @@ export default function Supervisor({ state, score }) {
 
     if (!visible) return null;
 
+    // Define color themes based on the doctor's reaction
+    const getReactionStyles = () => {
+        switch (state) {
+            case 'BAD':
+                return {
+                    border: 'border-rose-500/80',
+                    glow: 'shadow-[0_0_15px_rgba(244,63,94,0.4)]',
+                    textColor: 'text-rose-400',
+                    badge: 'bg-rose-950/80 text-rose-200 border-rose-500/30',
+                    bg: 'bg-slate-950/95 border-l-4 border-l-rose-500',
+                    indicator: 'bg-rose-500 animate-ping'
+                };
+            case 'GOOD':
+            case 'COMBO':
+                return {
+                    border: 'border-emerald-500/80',
+                    glow: 'shadow-[0_0_15px_rgba(16,185,129,0.35)]',
+                    textColor: 'text-emerald-400',
+                    badge: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/30',
+                    bg: 'bg-slate-950/95 border-l-4 border-l-emerald-500',
+                    indicator: 'bg-emerald-400 animate-pulse'
+                };
+            default:
+                return {
+                    border: 'border-cyan-500/70',
+                    glow: 'shadow-[0_0_12px_rgba(6,182,212,0.25)]',
+                    textColor: 'text-cyan-400',
+                    badge: 'bg-cyan-950/80 text-cyan-300 border-cyan-500/30',
+                    bg: 'bg-slate-950/95 border-l-4 border-l-cyan-500',
+                    indicator: 'bg-cyan-400 animate-pulse'
+                };
+        }
+    };
+
+    const styles = getReactionStyles();
+
     return (
-        <div className="absolute top-16 right-4 z-50 flex items-start max-w-[200px] animate-bounce-in">
-            <div className="glass p-3 rounded-tr-none rounded-br-2xl border-l-4 border-l-cyan-500 text-xs text-slate-200 shadow-xl mr-2 relative bg-slate-900/90">
-                <span className="font-bold text-cyan-400 block mb-1">Dr. Jaspers:</span>
-                "{msg}"
-                {/* Speech arrow */}
-                <div className="absolute top-2 -right-2 w-0 h-0 border-t-[8px] border-t-transparent border-l-[12px] border-l-slate-900 border-b-[8px] border-b-transparent"></div>
+        <div 
+            className={`absolute top-[76px] right-4 z-50 flex items-start max-w-[210px] transition-all duration-300 ${
+                triggerShake ? 'shake-heavy' : 'animate-bounce-in'
+            }`}
+        >
+            {/* Speach bubble content */}
+            <div 
+                className={`glass p-3 rounded-tr-none rounded-br-2xl text-[11px] text-slate-100 shadow-2xl mr-2.5 relative leading-relaxed backdrop-blur-md ${styles.bg} ${styles.glow}`}
+            >
+                <div className="flex items-center justify-between gap-2 mb-1 border-b border-white/5 pb-1">
+                    <span className={`font-black uppercase tracking-wider text-[8px] ${styles.textColor}`}>
+                        Dr. Jaspers
+                    </span>
+                    <span className={`text-[7px] font-mono px-1 rounded border ${styles.badge} flex items-center gap-1`}>
+                        <span className={`w-1 h-1 rounded-full ${styles.indicator}`}></span>
+                        COMS LINK
+                    </span>
+                </div>
+                <p className="italic font-medium text-slate-200">
+                    "{msg}"
+                </p>
+                {/* Speech arrow pointing to doctor */}
+                <div className="absolute top-2.5 -right-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[8px] border-l-slate-950 border-b-[6px] border-b-transparent"></div>
             </div>
-            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-cyan-500 shadow-lg bg-slate-800 flex items-center justify-center text-3xl">
-                👨‍⚕️
+
+            {/* Doctor avatar circle */}
+            <div 
+                className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg bg-slate-900 flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-300 ${styles.border} ${styles.glow}`}
+            >
+                {state === 'BAD' ? '😡' : state === 'COMBO' ? '😎' : '👨‍⚕️'}
             </div>
         </div>
     );

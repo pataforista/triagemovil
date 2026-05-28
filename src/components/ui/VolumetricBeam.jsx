@@ -47,10 +47,6 @@ export default function VolumetricBeam({
             // Simple noise simulation for "volumetric" effect
             ctx.clearRect(0, 0, w, h);
 
-            // Background fill
-            ctx.fillStyle = "#020617"; // Match base bg
-            ctx.fillRect(0, 0, w, h);
-
             // Beam Gradient
             const gradient = ctx.createRadialGradient(
                 w * 0.5 + Math.sin(time) * 50,

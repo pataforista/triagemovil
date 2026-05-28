@@ -8,3 +8,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>,
 )
+
+// PWA Service Worker is now handled automatically by vite-plugin-pwa (Workbox)
+// No manual registration needed — registerType: 'autoUpdate' manages it.
