@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 export default function InteractiveOrb({
     hue = 190,
     hoverIntensity = 0.6,
-    rotateOnHover = false,
     forceHoverState = false,
     className = "",
 }) {
@@ -30,7 +29,7 @@ export default function InteractiveOrb({
             <div
                 className="relative z-10 w-28 h-28 rounded-full bg-slate-950/90 border border-cyan-500/30 flex items-center justify-center shadow-2xl overflow-hidden group/orb"
                 style={{
-                    boxShadow: `0 0 ${isHover ? 45 : 20}px hsl(${hue}, 80%, ${isHover ? 60 : 40}%)`
+                    boxShadow: `0 0 ${isHover ? Math.round(20 + 40 * hoverIntensity) : 20}px hsl(${hue}, 80%, ${isHover ? 60 : 40}%)`
                 }}
             >
                 {/* Scanner swipe effect */}

@@ -1,35 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 
 export default function VolumetricBeam({
-    horizontalBeamOffset = 0.1,
-    verticalBeamOffset = 0.0,
-    horizontalSizing = 0.5,
-    verticalSizing = 2.0,
     wispDensity = 1,
     wispSpeed = 15.0,
-    wispIntensity = 5.0,
     flowSpeed = 0.35,
-    flowStrength = 0.25,
     fogIntensity = 0.45,
-    fogScale = 0.3,
-    fogFallSpeed = 0.6,
-    mouseTiltStrength = 0.01,
-    mouseSmoothTime = 0.0,
-    decay = 1.1,
-    falloffStart = 1.2,
     dpr = 'auto',
     color = '#FF79C6',
     className = ""
 }) {
     const canvasRef = useRef(null);
-    let animationId;
-    let time = 0;
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        let animationId;
+        let time = 0;
 
         function resize() {
             canvas.width = window.innerWidth * (dpr === 'auto' ? window.devicePixelRatio : dpr);
@@ -88,7 +77,7 @@ export default function VolumetricBeam({
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationId);
         };
-    }, [color, flowSpeed, wispSpeed, fogIntensity]);
+    }, [color, flowSpeed, wispSpeed, fogIntensity, dpr, wispDensity]);
 
     return (
         <canvas

@@ -10,7 +10,6 @@ export default function ReportScreen({ level, score, onNext }) {
 
     // Number ticker logic for the balance/score
     useEffect(() => {
-        let start = 0;
         const end = score;
         if (end <= 0) {
             // Trigger stamp early if score is 0

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PatientCard from './PatientCard';
 import { generatePatient } from '../data/patients';
 import Supervisor from './Supervisor';
@@ -9,7 +9,7 @@ import { vibrateSuccess, vibrateError, vibrateWarning } from '../utils/haptics';
 export default function GameScreen({ levelData, onLevelComplete }) {
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(levelData.duration);
-    const [waiting, setWaiting] = useState([]);
+    const [waiting, setWaiting] = useState(() => [generatePatient(levelData.id)]);
     const [bedsOBS, setBedsOBS] = useState(Array(levelData.beds).fill(null));
     const [bedsUCE, setBedsUCE] = useState(Array(levelData.uce).fill(null));
     const [alert, setAlert] = useState(null);
@@ -17,10 +17,18 @@ export default function GameScreen({ levelData, onLevelComplete }) {
     const [supervisorState, setSupervisorState] = useState('START'); // START, GOOD, BAD, COMBO
     const [combo, setCombo] = useState(0); // Racha de aciertos consecutivos
 
+    // Refs frescas para no reiniciar el temporizador en cada cambio de score
+    const scoreRef = useRef(score);
+    const onLevelCompleteRef = useRef(onLevelComplete);
+    useEffect(() => {
+        scoreRef.current = score;
+        onLevelCompleteRef.current = onLevelComplete;
+    }, [score, onLevelComplete]);
+
     // Timer Logic
     useEffect(() => {
         if (timeLeft <= 0) {
-            onLevelComplete(score);
+            onLevelCompleteRef.current(scoreRef.current);
             return;
         }
         if (timeLeft <= 10 && timeLeft % 2 === 0) {
@@ -33,9 +41,6 @@ export default function GameScreen({ levelData, onLevelComplete }) {
 
     // Spawner Logic
     useEffect(() => {
-        // Sembrar el primer paciente al iniciar la guardia
-        setWaiting(prev => (prev.length === 0 ? [generatePatient(levelData.id)] : prev));
-
         // Intervalo estable durante toda la guardia (el límite de cola se evalúa con estado fresco)
         const spawner = setInterval(() => {
             setWaiting(prev => (prev.length < 10 ? [...prev, generatePatient(levelData.id)] : prev));
