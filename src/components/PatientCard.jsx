@@ -20,7 +20,7 @@ export default function PatientCard({ p, onAssign }) {
             const lowerPart = part.toLowerCase();
 
             // 1. Heart Rate (FC)
-            if (lowerPart.includes("fc") || lowerPart.includes("bradicardia") || lowerPart.includes("pulso") || lowerPart.includes("fa with rvr")) {
+            if (/\bfc\b/.test(lowerPart) || lowerPart.includes("bradicardia") || lowerPart.includes("pulso") || lowerPart.includes("fa con rvr")) {
                 label = "HEART RATE / FC";
                 icon = "🫀";
                 // Extract number
@@ -38,7 +38,7 @@ export default function PatientCard({ p, onAssign }) {
                 }
             }
             // 2. Oxygen Saturation (Sat)
-            else if (lowerPart.includes("sat") || lowerPart.includes("paoc2") || lowerPart.includes("cianosis")) {
+            else if (lowerPart.includes("sat") || lowerPart.includes("paco2") || lowerPart.includes("cianosis")) {
                 label = "OXIMETRY / SPO2";
                 icon = "📈";
                 const numMatch = part.match(/(\d+)/);
@@ -53,7 +53,7 @@ export default function PatientCard({ p, onAssign }) {
                 }
             }
             // 3. Blood Pressure (TA)
-            else if (lowerPart.includes("ta") || lowerPart.includes("hipotensión") || lowerPart.includes("tensión")) {
+            else if (/\bta\b/.test(lowerPart) || lowerPart.includes("hipotensión") || lowerPart.includes("tensión")) {
                 label = "BP / PRESS";
                 icon = "⚡";
                 const taMatch = part.match(/(\d+\/\d+)/);

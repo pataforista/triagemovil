@@ -15,6 +15,7 @@ export default function GameScreen({ levelData, onLevelComplete }) {
     const [alert, setAlert] = useState(null);
     const [alertKey, setAlertKey] = useState(0);
     const [supervisorState, setSupervisorState] = useState('START'); // START, GOOD, BAD, COMBO
+    const [combo, setCombo] = useState(0); // Racha de aciertos consecutivos
 
     // Timer Logic
     useEffect(() => {
@@ -32,15 +33,15 @@ export default function GameScreen({ levelData, onLevelComplete }) {
 
     // Spawner Logic
     useEffect(() => {
-        if (waiting.length === 0) setWaiting([generatePatient(levelData.id)]);
+        // Sembrar el primer paciente al iniciar la guardia
+        setWaiting(prev => (prev.length === 0 ? [generatePatient(levelData.id)] : prev));
 
+        // Intervalo estable durante toda la guardia (el límite de cola se evalúa con estado fresco)
         const spawner = setInterval(() => {
-            if (waiting.length < 10) {
-                setWaiting(prev => [...prev, generatePatient(levelData.id)]);
-            }
+            setWaiting(prev => (prev.length < 10 ? [...prev, generatePatient(levelData.id)] : prev));
         }, levelData.spawnRate);
         return () => clearInterval(spawner);
-    }, [levelData, waiting.length]);
+    }, [levelData]);
 
     function pushAlert(msg) {
         setAlertKey(k => k + 1);
@@ -123,6 +124,16 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                     setBedsUCE(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
                 }, 12000);
             }
+        }
+
+        // 3. Lógica de Combos (racha de aciertos consecutivos)
+        if (success) {
+            const nextCombo = combo + 1;
+            setCombo(nextCombo);
+            // A partir de 3 aciertos seguidos el Dr. Jaspers reconoce la racha
+            if (nextCombo >= 3) newState = "COMBO";
+        } else {
+            setCombo(0);
         }
 
         // Audio & Haptic Triggers
