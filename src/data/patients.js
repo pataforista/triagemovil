@@ -48,7 +48,7 @@ export const CASES_ALTA = [
     { type: "ALTA", score: 80, sprite: "🫀", diag: "Palpitaciones (Ansiedad)", txt: ["Mi corazón late fuerte, pero el ECG es normal."], vitals: ["ECG Sinusal | FC 88"] },
     { type: "ALTA", score: 80, sprite: "🎓", diag: "Nido vacío", txt: ["Mi hijo se fue y no sé qué hacer."], vitals: ["FC 70 | Afecto reactivo"] },
     { type: "ALTA", score: 80, sprite: "📱", diag: "TAG - Hipocondría digital", txt: ["Googleo todos mis síntomas y siempre es cáncer."], vitals: ["FC 88 | TA 125/80"] },
-    { type: "ALTA", score: 80, sprite: "🚦", diag: "TAG - Anticipación catastrófica", txt: ["Always think the worst will happen."], vitals: ["FC 85 | Sin hallazgos físicos"] },
+    { type: "ALTA", score: 80, sprite: "🚦", diag: "TAG - Anticipación catastrófica", txt: ["Siempre pienso que va a pasar lo peor."], vitals: ["FC 85 | Sin hallazgos físicos"] },
     { type: "ALTA", score: 80, sprite: "🎯", diag: "TAG - Perfeccionismo", txt: ["Si no es perfecto, no sirve."], vitals: ["FC 80 | Ansiedad leve"] },
     { type: "ALTA", score: 80, sprite: "🛒", diag: "Pánico situacional", txt: ["En el súper me dan ganas de huir."], vitals: ["FC 92 | TA 130/85"] },
     { type: "ALTA", score: 80, sprite: "💍", diag: "Duelo por divorcio", txt: ["Me separé hace meses y no lo supero."], vitals: ["FC 76 | Sin ideación suicida"] },
@@ -85,7 +85,11 @@ export const CASES_ALTA = [
     { type: "ALTA", score: 80, sprite: "🩸", diag: "Hematofobia (sangre)", txt: ["Ver sangre me da náusea y me desmayo."], vitals: ["FC 55 (vasovagal)"] },
     { type: "ALTA", score: 80, sprite: "🐈", diag: "Ailurofobia (gatos)", txt: ["Si veo un gato callejero me da taquicardia."], vitals: ["FC 98"] },
     { type: "ALTA", score: 80, sprite: "🧪", diag: "Trastorno de despersonalización", txt: ["Siento que vivo en una película, nada es real."], vitals: ["FC 85 | Neuro normal"] },
-    { type: "ALTA", score: 80, sprite: "🕒", diag: "Jet lag crónico", txt: ["Viajo seguido y no logro adaptar mi sueño."], vitals: ["FC 78"] }
+    { type: "ALTA", score: 80, sprite: "🕒", diag: "Jet lag crónico", txt: ["Viajo seguido y no logro adaptar mi sueño."], vitals: ["FC 78"] },
+    { type: "ALTA", score: 80, sprite: "🧵", diag: "Tricotilomanía", txt: ["Me arranco el cabello cuando estoy ansiosa."], vitals: ["Áreas de alopecia | FC 82"] },
+    { type: "ALTA", score: 80, sprite: "✋", diag: "Masturbación compulsiva", txt: ["Me masturbo varias veces al día, no puedo parar."], vitals: ["FC 90 | Sin lesiones"] },
+    { type: "ALTA", score: 80, sprite: "🛍️", diag: "Compras compulsivas", txt: ["Gasté mi quincena en ropa que no necesito."], vitals: ["FC 85"] },
+    { type: "ALTA", score: 80, sprite: "🏠", diag: "Trastorno de acumulación", txt: ["Mi casa está llena de cosas, no puedo tirar nada."], vitals: ["FC 80"] }
 ];
 
 // ======================== CASOS OBS (60) ========================
@@ -124,12 +128,7 @@ export const CASES_OBS = [
     { type: "OBS", score: 120, sprite: "💔", diag: "Cardiofobia", txt: ["Cada vez que siento una palpitación creo que es un infarto."], vitals: ["Holter normal | FC 95 por ansiedad"] },
     { type: "OBS", score: 120, sprite: "🌊", diag: "Mareo psicógeno", txt: ["El piso se mueve, pero las pruebas son normales."], vitals: ["Prueba calórica normal | FC 88"] },
     { type: "OBS", score: 120, sprite: "😵", diag: "Desmayo funcional", txt: ["Me desmayo cada vez que veo una jeringa."], vitals: ["FC 65 | TA 105/65"] },
-    { type: "OBS", score: 120, sprite: "🗣️", diag: "Síndrome de pseudobulbar", txt: ["Lloro o río sin control, me da vergüenza."], vitals: ["FC 80 | Neurológico estable"] },
-    { type: "OBS", score: 120, sprite: "🧵", diag: "Tricotilomanía", txt: ["Me arranco el cabello cuando estoy ansiosa."], vitals: ["Áreas de alopecia | FC 82"] },
-    { type: "OBS", score: 120, sprite: "🩸", diag: "Masturbación compulsiva", txt: ["Me masturbo varias veces al día, no puedo parar."], vitals: ["FC 90 | Sin lesiones"] },
-    { type: "OBS", score: 120, sprite: "🛍️", diag: "Compras compulsivas", txt: ["Gasté mi quincena en ropa que no necesito."], vitals: ["FC 85"] },
-    { type: "OBS", score: 120, sprite: "🏠", diag: "Trastorno de acumulación", txt: ["Mi casa está llena de cosas, no puedo tirar nada."], vitals: ["FC 80"] },
-    { type: "OBS", score: 120, sprite: "🚨", diag: "Pseudocrisis psicógenas frecuentes", txt: ["Tengo 'ataques' que parecen convulsiones pero el EEG es normal."], vitals: ["Resistencia a apertura ocular | Sat 99%"] }
+    { type: "OBS", score: 120, sprite: "🗣️", diag: "Síndrome de pseudobulbar", txt: ["Lloro o río sin control, me da vergüenza."], vitals: ["FC 80 | Neurológico estable"] }
 ];
 
 // ======================== CASOS UCE (45) ========================
@@ -158,7 +157,6 @@ export const CASES_UCE = [
     // NUEVOS UCE
     { type: "UCE", score: 200, sprite: "💉", diag: "Intoxicación por opioides (coma)", txt: ["(No responde, pinchazos de naloxona)"], vitals: ["FR 6 | Miosis puntiforme | Sat 70%"] },
     { type: "UCE", score: 200, sprite: "🧠💢", diag: "Status epiléptico", txt: ["(Convulsiona sin parar)"], vitals: ["Convulsiones tónico-clónicas | FC 160"] },
-    { type: "UCE", score: 200, sprite: "🩸🧠", diag: "Hemorragia subaracnoidea", txt: ["¡El peor dolor de cabeza de mi vida!"], vitals: ["TA 190/110 | Rigidez nuca | Glasgow 11"] },
     { type: "UCE", score: 200, sprite: "💢", diag: "Psicosis aguda con autoagresión", txt: ["¡Me voy a sacar los ojos!"], vitals: ["FC 140 | Riesgo inminente"] },
     { type: "UCE", score: 200, sprite: "🩸🏃", diag: "Hemorragia digestiva masiva", txt: ["Vomito sangre, me siento desmayar."], vitals: ["TA 80/50 | FC 130 | Hematemesis"] },
     { type: "UCE", score: 200, sprite: "🫁🪫", diag: "Insuficiencia respiratoria (hipoxia)", txt: ["(Confuso, agitado, cianótico)"], vitals: ["Sat 75% | PaO2 50 | Taquipnea"] },
