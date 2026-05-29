@@ -32,37 +32,26 @@ const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 export default function Supervisor({ state, score }) {
     const [msg, setMsg] = useState("");
     const [visible, setVisible] = useState(false);
-    const [triggerShake, setTriggerShake] = useState(false);
 
-    // React to state changes
+    // Reacciona a los cambios de estado (incluye el montaje inicial con state='START')
     useEffect(() => {
         let text = "";
         if (state === 'START') text = random(QUOTES.start);
         else if (state === 'GOOD') text = random(QUOTES.good);
-        else if (state === 'BAD') {
-            text = random(QUOTES.bad);
-            // Trigger physical shake animation when the doctor gets angry
-            setTriggerShake(true);
-            const shakeTimer = setTimeout(() => setTriggerShake(false), 500);
-            return () => clearTimeout(shakeTimer);
-        }
+        else if (state === 'BAD') text = random(QUOTES.bad);
         else if (state === 'COMBO') text = random(QUOTES.combo);
 
-        if (text) {
-            setMsg(text);
-            setVisible(true);
-            const timer = setTimeout(() => setVisible(false), 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [state, score]);
+        if (!text) return;
 
-    // Force show at mount
-    useEffect(() => {
-        setMsg(random(QUOTES.start));
+        // Patrón intencional "toast al cambiar de prop": muestra un mensaje
+        // aleatorio del supervisor y lo auto-oculta tras 5s. La aleatoriedad y
+        // el temporizador hacen que deba vivir en un efecto que reacciona a las props.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMsg(text);
         setVisible(true);
-        const t = setTimeout(() => setVisible(false), 5000);
-        return () => clearTimeout(t);
-    }, []);
+        const timer = setTimeout(() => setVisible(false), 5000);
+        return () => clearTimeout(timer);
+    }, [state, score]);
 
     if (!visible) return null;
 
@@ -103,9 +92,10 @@ export default function Supervisor({ state, score }) {
     const styles = getReactionStyles();
 
     return (
-        <div 
+        <div
+            key={msg}
             className={`absolute top-[76px] right-4 z-50 flex items-start max-w-[210px] transition-all duration-300 ${
-                triggerShake ? 'shake-heavy' : 'animate-bounce-in'
+                state === 'BAD' ? 'shake-heavy' : 'animate-bounce-in'
             }`}
         >
             {/* Speach bubble content */}
