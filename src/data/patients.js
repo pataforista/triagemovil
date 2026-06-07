@@ -195,7 +195,7 @@ export const CASES_TRAMPA = [
     { type: "TRAP", real: "ALTA", score: 150, sprite: "🫀💓", diag: "Taquicardia sinusal inapropiada", txt: ["Palpitaciones todo el día, ansiedad."], vitals: ["FC 110 en reposo | EKG sinusal"] },
     { type: "TRAP", real: "OBS", score: 150, sprite: "🩸🌡️", diag: "Sepsis de foco urinario", txt: ["Anciano confuso, fiebre, orina turbia."], vitals: ["Temp 38.8 | FC 115 | TA 100/60"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍄🌡️", diag: "Meningoencefalitis por criptococo", txt: ["Inmunosuprimido, cefalea, rigidez nuca."], vitals: ["Temp 38.5 | Glasgow 13"] },
-    { type: "TRAP", real: "ALTA", score: 150, sprite: "🎭", diag: "Trastorno facticio (autoinyección insulina)", txt: ["Hipoglucemias recurrentes sin causa."], vitals: ["Insulina alta, péptido C bajo"] },
+    { type: "TRAP", real: "OBS", score: 150, sprite: "💉🎭", diag: "Trastorno facticio (autoinyección insulina)", txt: ["Hipoglucemias recurrentes sin causa."], vitals: ["Glu 55 mg/dL | Insulina alta | Péptido C bajo"] },
     { type: "TRAP", real: "OBS", score: 150, sprite: "👴💊", diag: "Parkinson inducido por neurolépticos", txt: ["Rigidez y bradicinesia tras haloperidol."], vitals: ["Temblor de reposo | FC 80 | Afebril | CPK normal | Exposición reciente a haloperidol"] },
     // CLINICAL REVISION: Anorexia Alarma moved from OBS to TRAP (real: UCE) because it represents UCE criteria
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍽️❌", diag: "Anorexia (Alarma)", txt: ["No como hace días, corazón raro."], vitals: ["FC 45 | IMC 15 | TA 90/60 | Criterios de ingreso UCE"] }

@@ -78,16 +78,34 @@ export default function PatientCard({ p, onAssign }) {
                 if (numMatch) {
                     const temp = parseFloat(numMatch[1]);
                     value = `${temp}°C`;
-                    if (temp >= 38.5) {
+                    if (temp >= 38.5 || temp < 35) {
                         status = "danger";
-                    } else if (temp >= 37.5) {
+                    } else if (temp >= 37.5 || temp < 36) {
                         status = "warning";
                     }
                 } else if (lowerPart.includes("afebril")) {
                     value = "Normal Temp";
                 }
             }
-            // 5. Blood Glucose (Glu)
+            // 5. Respiratory Rate (FR)
+            else if (/\bfr\b/.test(lowerPart) || lowerPart.includes("taquipnea") || lowerPart.includes("respiratoria")) {
+                label = "RESP RATE / FR";
+                icon = "🫁";
+                const numMatch = part.match(/(\d+)/);
+                if (numMatch) {
+                    const fr = parseInt(numMatch[1]);
+                    value = `${fr} rpm`;
+                    if (fr < 8 || fr > 30) {
+                        status = "danger";
+                    } else if (fr < 12 || fr > 24) {
+                        status = "warning";
+                    }
+                } else {
+                    // "Taquipnea" / "insuficiencia respiratoria" sin valor numérico
+                    status = "warning";
+                }
+            }
+            // 6. Blood Glucose (Glu)
             else if (lowerPart.includes("glu")) {
                 label = "GLUCOSE / GLU";
                 icon = "🍬";
@@ -102,7 +120,7 @@ export default function PatientCard({ p, onAssign }) {
                     }
                 }
             }
-            // 6. Consciousness (Glasgow)
+            // 7. Consciousness (Glasgow)
             else if (lowerPart.includes("glasgow")) {
                 label = "CONSCIOUSNESS";
                 icon = "🧠";
