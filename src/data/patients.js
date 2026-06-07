@@ -89,7 +89,11 @@ export const CASES_ALTA = [
     { type: "ALTA", score: 80, sprite: "🧵", diag: "Tricotilomanía", txt: ["Me arranco el cabello cuando estoy ansiosa."], vitals: ["Áreas de alopecia | FC 82"] },
     { type: "ALTA", score: 80, sprite: "✋", diag: "Masturbación compulsiva", txt: ["Me masturbo varias veces al día, no puedo parar."], vitals: ["FC 90 | Sin lesiones"] },
     { type: "ALTA", score: 80, sprite: "🛍️", diag: "Compras compulsivas", txt: ["Gasté mi quincena en ropa que no necesito."], vitals: ["FC 85"] },
-    { type: "ALTA", score: 80, sprite: "🏠", diag: "Trastorno de acumulación", txt: ["Mi casa está llena de cosas, no puedo tirar nada."], vitals: ["FC 80"] }
+    { type: "ALTA", score: 80, sprite: "🏠", diag: "Trastorno de acumulación", txt: ["Mi casa está llena de cosas, no puedo tirar nada."], vitals: ["FC 80"] },
+    { type: "ALTA", score: 80, sprite: "🚬", diag: "Abstinencia nicotina (síntomas leves)", txt: ["No puedo concentrarme, 2 días sin fumar."], vitals: ["FC 95 | Irritabilidad"] },
+    { type: "ALTA", score: 80, sprite: "💔", diag: "Cardiofobia", txt: ["Cada vez que siento una palpitación creo que es un infarto."], vitals: ["Holter normal | FC 95 por ansiedad"] },
+    { type: "ALTA", score: 80, sprite: "🌙", diag: "Trastorno de pesadillas", txt: ["Todas las noches sueño que me persiguen, grito."], vitals: ["FC 90 | Resto normal"] },
+    { type: "ALTA", score: 80, sprite: "🫂", diag: "Duelo complicado (6 meses)", txt: ["Mi hijo murió hace medio año y no salgo adelante."], vitals: ["FC 85 | Sin ideación suicida"] }
 ];
 
 // ======================== CASOS OBS (60) ========================
@@ -114,7 +118,6 @@ export const CASES_OBS = [
     { type: "OBS", score: 120, sprite: "🤱", diag: "Depresión Postparto Moderada", txt: ["Mi bebé tiene 2 meses, no siento amor."], vitals: ["EPDS 15 | Sin ideación de daño"] },
     { type: "OBS", score: 120, sprite: "🎨", diag: "Hipomanía creativa", txt: ["3 días sin dormir, pinté 20 cuadros."], vitals: ["FC 100 | Verborrea | Conducta expansiva | Sin síntomas psicóticos"] },
     { type: "OBS", score: 120, sprite: "💘", diag: "Hipomanía sexual", txt: ["5 desconocidos esta semana, nada me para."], vitals: ["FC 98 | Conductas de riesgo"] },
-    { type: "OBS", score: 120, sprite: "🚬", diag: "Abstinencia nicotina severa", txt: ["No puedo concentrarme, 2 días sin fumar."], vitals: ["FC 95 | Irritabilidad"] },
     { type: "OBS", score: 120, sprite: "📺", diag: "Psicosis paranoide (estable)", txt: ["La tele me habla."], vitals: ["FC 88 | Sin agresividad"] },
     { type: "OBS", score: 120, sprite: "👤", diag: "Síndrome de Capgras", txt: ["Mi esposa es un impostor."], vitals: ["FC 85 | TA 125/80 | Sin antecedente neurológico conocido | Primera presentación"] },
     { type: "OBS", score: 120, sprite: "🔢", diag: "TOC de cotejo", txt: ["Cuento hasta 8, todo el día."], vitals: ["FC 85 | Ansiedad 9/10"] },
@@ -123,9 +126,6 @@ export const CASES_OBS = [
     { type: "OBS", score: 120, sprite: "🔥", diag: "Crisis de ira contenida", txt: ["Siento que voy a explotar en cualquier momento."], vitals: ["FC 120 | TA 150/90"] },
     { type: "OBS", score: 120, sprite: "💊", diag: "Intoxicación por benzodiazepinas", txt: ["Tomé varias pastillas para dormir y ahora no puedo mantenerme despierto."], vitals: ["Glasgow 13 | Pupilas normales | FR 12"] },
     { type: "OBS", score: 120, sprite: "🧠", diag: "Amnesia global transitoria", txt: ["¿Dónde estoy? ¿Dónde estoy? ¿Dónde estoy? No sé cómo llegué."], vitals: ["FC 80 | TA 125/80 | Neuro focal normal | Repetición de preguntas"] },
-    { type: "OBS", score: 120, sprite: "🌙", diag: "Trastorno de pesadillas", txt: ["Todas las noches sueño que me persiguen, grito."], vitals: ["FC 90 | Resto normal"] },
-    { type: "OBS", score: 120, sprite: "🫂", diag: "Duelo complicado (6 meses)", txt: ["Mi hijo murió hace medio año y no salgo adelante."], vitals: ["FC 85 | Sin ideación suicida"] },
-    { type: "OBS", score: 120, sprite: "💔", diag: "Cardiofobia", txt: ["Cada vez que siento una palpitación creo que es un infarto."], vitals: ["Holter normal | FC 95 por ansiedad"] },
     { type: "OBS", score: 120, sprite: "🌊", diag: "Mareo psicógeno", txt: ["El piso se mueve, pero las pruebas son normales."], vitals: ["Prueba calórica normal | FC 88"] },
     { type: "OBS", score: 120, sprite: "😵", diag: "Desmayo funcional", txt: ["Me desmayo cada vez que veo una jeringa."], vitals: ["FC 65 | TA 105/65"] },
     { type: "OBS", score: 120, sprite: "🗣️", diag: "Síndrome de pseudobulbar", txt: ["Lloro o río sin control, me da vergüenza."], vitals: ["FC 80 | Neurológico estable"] }
@@ -170,7 +170,7 @@ export const CASES_UCE = [
 export const CASES_TRAMPA = [
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍬", diag: "Hipoglucemia severa", txt: ["Agresivo y sudoroso, no responde."], vitals: ["Glu 25 mg/dL | Piel fría | Glasgow 9"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🥵", diag: "Meningitis bacteriana", txt: ["Grita y tiene fiebre, no tolera la luz."], vitals: ["Rigidez nuca | Temp 39.5°C | Petequias"] },
-    { type: "TRAP", real: "UCE", score: 150, sprite: "🧠⚡", diag: "Epilepsia lóbulo temporal", txt: ["Miedo súbito, olor a quemado, desconexión."], vitals: ["EEG patológico | Confusión postictal"] },
+    { type: "TRAP", real: "OBS", score: 150, sprite: "🧠⚡", diag: "Epilepsia lóbulo temporal (crisis resuelta)", txt: ["Miedo súbito, olor a quemado, desconexión."], vitals: ["EEG patológico | Confusión postictal | Crisis cedida"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🧠💥", diag: "EVC isquémico", txt: ["Dejó de hablar de repente, confuso."], vitals: ["Afasia | Hemiparesia | TA 180/100"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🩸🧠", diag: "Hemorragia subaracnoidea", txt: ["'El peor dolor de cabeza de mi vida'."], vitals: ["TA 210/110 | Rigidez nuca"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🧪☠️", diag: "Intoxicación por monóxido", txt: ["Toda la familia confusa, cefalea."], vitals: ["Sat 98% (falsa) | Carboxihemoglobina 25% | CO-oximetría necesaria"] },
@@ -195,7 +195,7 @@ export const CASES_TRAMPA = [
     { type: "TRAP", real: "ALTA", score: 150, sprite: "🫀💓", diag: "Taquicardia sinusal inapropiada", txt: ["Palpitaciones todo el día, ansiedad."], vitals: ["FC 110 en reposo | EKG sinusal"] },
     { type: "TRAP", real: "OBS", score: 150, sprite: "🩸🌡️", diag: "Sepsis de foco urinario", txt: ["Anciano confuso, fiebre, orina turbia."], vitals: ["Temp 38.8 | FC 115 | TA 100/60"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍄🌡️", diag: "Meningoencefalitis por criptococo", txt: ["Inmunosuprimido, cefalea, rigidez nuca."], vitals: ["Temp 38.5 | Glasgow 13"] },
-    { type: "TRAP", real: "ALTA", score: 150, sprite: "🎭", diag: "Trastorno facticio (autoinyección insulina)", txt: ["Hipoglucemias recurrentes sin causa."], vitals: ["Insulina alta, péptido C bajo"] },
+    { type: "TRAP", real: "OBS", score: 150, sprite: "💉🎭", diag: "Trastorno facticio (autoinyección insulina)", txt: ["Hipoglucemias recurrentes sin causa."], vitals: ["Glu 55 mg/dL | Insulina alta | Péptido C bajo"] },
     { type: "TRAP", real: "OBS", score: 150, sprite: "👴💊", diag: "Parkinson inducido por neurolépticos", txt: ["Rigidez y bradicinesia tras haloperidol."], vitals: ["Temblor de reposo | FC 80 | Afebril | CPK normal | Exposición reciente a haloperidol"] },
     // CLINICAL REVISION: Anorexia Alarma moved from OBS to TRAP (real: UCE) because it represents UCE criteria
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍽️❌", diag: "Anorexia (Alarma)", txt: ["No como hace días, corazón raro."], vitals: ["FC 45 | IMC 15 | TA 90/60 | Criterios de ingreso UCE"] }

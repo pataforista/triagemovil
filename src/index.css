@@ -23,17 +23,22 @@ body {
     display: flex;
     justify-content: center;
     height: 100vh;
+    height: 100dvh; /* viewport dinámico: evita que la barra del navegador móvil corte el contenido */
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none; /* evita el "pull to refresh" y rebote en móvil */
 }
 
 #root {
     width: 100%;
     max-width: 500px;
     height: 100vh;
+    height: 100dvh;
     position: relative;
     display: flex;
     flex-direction: column;
     z-index: 10;
+    /* Áreas seguras para dispositivos con notch / barra de inicio (iPhone, etc.) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .hud-font {
@@ -213,7 +218,7 @@ body {
 
 /* --- CUSTOM UTILS --- */
 .scroll-hide::-webkit-scrollbar { display: none; }
-.text-vibrant-uce { color: var(--c-uce); text-shadow: 0 0 10px rgba(244, 63, 92, 0.4); }
+.text-vibrant-uce { color: var(--c-uce); text-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
 .text-vibrant-alta { color: var(--c-alta); text-shadow: 0 0 10px rgba(45, 212, 191, 0.4); }
 .text-vibrant-obs { color: var(--c-obs); text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
 
@@ -330,4 +335,27 @@ body {
     box-shadow: 0 8px 30px -5px rgba(0,0,0,0.5);
     animation: alert-float-anim 2.8s ease forwards;
     pointer-events: none;
+}
+
+/* Scroll suave con inercia en iOS para la lista de pacientes */
+.custom-scrollbar,
+.scroll-hide {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- ACCESIBILIDAD: respeta "Reducir movimiento" del sistema --- */
+/* Mantiene legible y usable el juego sin animaciones intensas (batería/mareo). */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .game-background {
+        animation: none !important;
+    }
 }

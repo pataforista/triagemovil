@@ -20,9 +20,14 @@ export default function VolumetricBeam({
         let animationId;
         let time = 0;
 
+        // Respeta la preferencia de "reducir movimiento" del sistema.
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
         function resize() {
-            canvas.width = window.innerWidth * (dpr === 'auto' ? window.devicePixelRatio : dpr);
-            canvas.height = window.innerHeight * (dpr === 'auto' ? window.devicePixelRatio : dpr);
+            // Limita el DPR a 2 para no saturar GPUs de móviles de alta densidad (evita lag/calor).
+            const ratio = dpr === 'auto' ? Math.min(window.devicePixelRatio || 1, 2) : dpr;
+            canvas.width = window.innerWidth * ratio;
+            canvas.height = window.innerHeight * ratio;
         }
         window.addEventListener('resize', resize);
         resize();
@@ -70,11 +75,24 @@ export default function VolumetricBeam({
                 ctx.fill();
             }
 
-            animationId = requestAnimationFrame(draw);
+            // En modo "reducir movimiento" pintamos un solo fotograma estático.
+            if (!reduceMotion) animationId = requestAnimationFrame(draw);
         }
         draw();
+
+        // Pausa la animación cuando la pestaña/app no está visible (ahorra batería).
+        function handleVisibility() {
+            if (document.hidden) {
+                cancelAnimationFrame(animationId);
+            } else if (!reduceMotion) {
+                animationId = requestAnimationFrame(draw);
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibility);
+
         return () => {
             window.removeEventListener('resize', resize);
+            document.removeEventListener('visibilitychange', handleVisibility);
             cancelAnimationFrame(animationId);
         };
     }, [color, flowSpeed, wispSpeed, fogIntensity, dpr, wispDensity]);
