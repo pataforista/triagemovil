@@ -2,5 +2,40 @@
 User-agent: *
 Allow: /
 
+# Allow all search engines to crawl
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: facebot
+Allow: /
+
+User-agent: ia_archiver
+Allow: /
+
+# Disallow admin or private areas if they exist
+# Disallow: /admin/
+# Disallow: /private/
+
 # Sitemap URL
 Sitemap: https://pataforista.github.io/triagemovil/sitemap.xml
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 1

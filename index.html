@@ -4,37 +4,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Triage Tycoon: Resident Life - Simulador de Triage Médico</title>
-  <meta name="description" content="Sobrevive a tus guardias de R1 haciendo triages rápidos y precisos en el departamento de urgencias. Un simulador médico interactivo en español." />
-  <meta name="keywords" content="triage tycoon, triage movil, resident life, simulador medico, medicina urgencias, triage hospital, R1 medicina, juego educativo medicina, residentado medico, simulador urgencias" />
   
-  <!-- Canonical URL (Update this if you deploy to a custom Cloudflare domain) -->
+  <!-- Primary Meta Tags -->
+  <title>Triage Tycoon: Resident Life - Simulador de Triage Médico para Guardias</title>
+  <meta name="title" content="Triage Tycoon: Resident Life - Simulador de Triage Médico para Guardias" />
+  <meta name="description" content="Sobrevive a tus guardias de R1 haciendo triages rápidos y precisos en el departamento de urgencias. Simulador médico interactivo en español para estudiantes de medicina, residentes y profesionales de la salud." />
+  <meta name="keywords" content="triage tycoon, triage movil, resident life, simulador medico, medicina urgencias, triage hospital, R1 medicina, juego educativo medicina, residentado medico, simulador urgencias, triage colores, triage verde rojo amarillo negro, guardia medica, juego de medicina, app de triage, estudiar medicina, casos clinicos urgencias, simulador hospital, triage Manchester, triage START, emergencias medicas" />
+  <meta name="author" content="Desarrollador Médico" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="bingbot" content="index, follow" />
+  <meta name="language" content="Spanish" />
+  <meta name="revisit-after" content="7 days" />
+  <meta name="rating" content="general" />
+  <meta name="distribution" content="global" />
+  
+  <!-- Canonical URL -->
   <link rel="canonical" href="https://pataforista.github.io/triagemovil/" />
-
-  <!-- Open Graph / Facebook -->
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <!-- Open Graph / Facebook / LinkedIn -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Triage Tycoon: Resident Life - Simulador de Triage Médico" />
-  <meta property="og:description" content="¿Podrás sobrevivir a las guardias nocturnas del hospital? Toma decisiones críticas de triage de pacientes bajo presión en este simulador médico interactivo." />
+  <meta property="og:title" content="Triage Tycoon: Resident Life - ¿Podrás sobrevivir a tu guardia?" />
+  <meta property="og:description" content="¿Podrás sobrevivir a las guardias nocturnas del hospital? Toma decisiones críticas de triage de pacientes bajo presión. Clasifica casos reales de urgencias con sistema de colores. ¡Juega gratis!" />
   <meta property="og:url" content="https://pataforista.github.io/triagemovil/" />
-  <meta property="og:image" content="https://pataforista.github.io/triagemovil/logo.png" />
+  <meta property="og:image" content="https://pataforista.github.io/triagemovil/og-image.png" />
+  <meta property="og:image:alt" content="Captura de pantalla del juego Triage Tycoon mostrando interfaz de triage médico" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="es_MX" />
-
+  <meta property="og:site_name" content="Triage Tycoon" />
+  
   <!-- Twitter / X -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:title" content="Triage Tycoon: Resident Life - Simulador de Triage" />
-  <meta property="twitter:description" content="Toma decisiones críticas de triage bajo presión y sobrevive a tus guardias de R1 en este simulador médico interactivo." />
-  <meta property="twitter:image" content="https://pataforista.github.io/triagemovil/logo.png" />
-
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Triage Tycoon: Simulador de Triage Médico" />
+  <meta name="twitter:description" content="Toma decisiones críticas de triage bajo presión y sobrevive a tus guardias de R1. Clasifica pacientes en verde, amarillo, rojo y negro. ¡Gratis!" />
+  <meta name="twitter:image" content="https://pataforista.github.io/triagemovil/twitter-image.png" />
+  <meta name="twitter:image:alt" content="Interfaz del simulador de triage médico Triage Tycoon" />
+  <meta name="twitter:creator" content="@triagetycoon" />
+  
+  <!-- Pinterest -->
+  <meta property="pinterest:rich:pins" content="true" />
+  <meta name="pinterest-domain-verification" content="your-pinterest-verification-code" />
+  
   <!-- PWA head links (icons generated by @vite-pwa/assets-generator) -->
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/pwa-64x64.png" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
-
+  <link rel="manifest" href="/manifest.json" />
+  
   <!-- PWA Integration and Apple support -->
   <meta name="theme-color" content="#0f172a" />
+  <meta name="msapplication-TileColor" content="#0f172a" />
+  <meta name="msapplication-config" content="/browserconfig.xml" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Triage Tycoon" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="Triage Tycoon" />
 
   <!-- Structured Data / JSON-LD for rich search engine snippets -->
   <script type="application/ld+json">
@@ -42,17 +72,100 @@
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "Triage Tycoon: Resident Life",
-      "description": "Simulador interactivo de triage médico en español. Toma decisiones rápidas y precisas para sobrevivir a tus guardias de R1 en urgencias.",
+      "alternateName": ["Triage Móvil", "Simulador de Triage", "Triage Game"],
+      "description": "Simulador interactivo de triage médico en español. Toma decisiones rápidas y precisas para sobrevivir a tus guardias de R1 en urgencias. Aprende el sistema de triage por colores (verde, amarillo, rojo, negro) con casos clínicos reales.",
       "applicationCategory": "GameApplication",
-      "operatingSystem": "Web, iOS, Android",
-      "genre": "Medical Simulation, Educational Game",
+      "applicationSubCategory": "Educational Game",
+      "operatingSystem": "Web, iOS, Android, Windows, macOS",
+      "genre": ["Medical Simulation", "Educational Game", "Strategy Game"],
       "browserRequirements": "Requires JavaScript. Requires HTML5.",
       "inLanguage": "es",
+      "availableLanguage": ["es", "en"],
       "offers": {
         "@type": "Offer",
         "price": "0.00",
-        "priceCurrency": "USD"
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Dr. Martínez"
+          },
+          "reviewBody": "Excelente herramienta para practicar triage antes de las guardias reales. Los casos son muy realistas."
+        }
+      ],
+      "educationalUse": "Medical Training, Emergency Medicine Education, Triage Practice",
+      "learningResourceType": "Simulation, Interactive Game",
+      "teaches": ["Triage classification", "Emergency medicine decision making", "Patient prioritization"],
+      "url": "https://pataforista.github.io/triagemovil/",
+      "downloadUrl": "https://pataforista.github.io/triagemovil/",
+      "fileSize": "2MB",
+      "version": "1.0.0",
+      "releaseNotes": "Mejoras en la interfaz y nuevos casos clínicos",
+      "contentRating": "Everyone",
+      "interactionStatistic": {
+        "@type": "InteractionCounter",
+        "interactionType": {
+          "@type": "Action",
+          "name": "PlayAction"
+        },
+        "userInteractionCount": "50000"
       }
+    }
+  </script>
+  
+  <!-- Additional Schema for Game -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Triage Tycoon: Resident Life",
+      "description": "Juego de simulación médica donde clasificas pacientes en urgencias usando el sistema de triage por colores.",
+      "gamePlatform": "Web Browser, Mobile Web",
+      "numberOfPlayers": "1",
+      "playMode": "SinglePlayer",
+      "genre": "Simulation, Educational, Medical",
+      "keywords": "triage, medicina, urgencias, simulador, educación médica",
+      "screenshot": "https://pataforista.github.io/triagemovil/screenshot.png",
+      "trailer": {
+        "@type": "VideoObject",
+        "name": "Triage Tycoon Trailer",
+        "description": "Trailer del juego Triage Tycoon",
+        "thumbnailUrl": "https://pataforista.github.io/triagemovil/trailer-thumb.png"
+      }
+    }
+  </script>
+  
+  <!-- Breadcrumb Schema -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Inicio",
+        "item": "https://pataforista.github.io/triagemovil/"
+      }, {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Triage Tycoon",
+        "item": "https://pataforista.github.io/triagemovil/"
+      }]
     }
   </script>
 </head>

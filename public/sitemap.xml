@@ -1,9 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- Página Principal -->
   <url>
     <loc>https://pataforista.github.io/triagemovil/</loc>
     <lastmod>2026-05-27</lastmod>
-    <changefreq>monthly</changefreq>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://pataforista.github.io/triagemovil/" />
+    <image:image>
+      <image:loc>https://pataforista.github.io/triagemovil/og-image.png</image:loc>
+      <image:title>Triage Tycoon - Simulador de Triage Médico</image:title>
+      <image:caption>Interfaz del juego mostrando sistema de triage por colores</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://pataforista.github.io/triagemovil/screenshot.png</image:loc>
+      <image:title>Captura de pantalla del juego</image:title>
+    </image:image>
   </url>
+  
+  <!-- Versión en Inglés (si se implementa en el futuro) -->
+  <url>
+    <loc>https://pataforista.github.io/triagemovil/en</loc>
+    <lastmod>2026-05-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://pataforista.github.io/triagemovil/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://pataforista.github.io/triagemovil/en" />
+  </url>
+  
 </urlset>

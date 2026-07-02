@@ -25,6 +25,13 @@ export default function GameScreen({ levelData, onLevelComplete }) {
         onLevelCompleteRef.current = onLevelComplete;
     }, [score, onLevelComplete]);
 
+    const bedsOBSRef = useRef(bedsOBS);
+    const bedsUCERef = useRef(bedsUCE);
+    useEffect(() => {
+        bedsOBSRef.current = bedsOBS;
+        bedsUCERef.current = bedsUCE;
+    }, [bedsOBS, bedsUCE]);
+
     // Timer Logic
     useEffect(() => {
         if (timeLeft <= 0) {
@@ -47,6 +54,15 @@ export default function GameScreen({ levelData, onLevelComplete }) {
         }, levelData.spawnRate);
         return () => clearInterval(spawner);
     }, [levelData]);
+
+    // Cleanup timeouts on unmount to prevent memory leaks
+    const timeoutRefs = useRef([]);
+    useEffect(() => {
+        return () => {
+            timeoutRefs.current.forEach(clearTimeout);
+            timeoutRefs.current = [];
+        };
+    }, []);
 
     function pushAlert(msg) {
         setAlertKey(k => k + 1);
@@ -112,9 +128,10 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 success = false;
             } else {
                 let newBeds = [...bedsOBS]; newBeds[idx] = p; setBedsOBS(newBeds);
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     setBedsOBS(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
-                }, 6000); 
+                }, 6000);
+                timeoutRefs.current.push(timeoutId);
             }
         } else if (target === 'UCE') {
             const idx = bedsUCE.indexOf(null);
@@ -125,9 +142,10 @@ export default function GameScreen({ levelData, onLevelComplete }) {
                 success = false;
             } else {
                 let newBeds = [...bedsUCE]; newBeds[idx] = p; setBedsUCE(newBeds);
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     setBedsUCE(curr => { let c = [...curr]; if (c[idx] === p) c[idx] = null; return c; });
                 }, 12000);
+                timeoutRefs.current.push(timeoutId);
             }
         }
 

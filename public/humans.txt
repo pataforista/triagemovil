@@ -1,0 +1,21 @@
+/* TEAM */
+Developer: Equipo Médico Desarrollador
+Location: México
+Contributors: Estudiantes y residentes de medicina
+
+/* THANKS */
+A todos los médicos residentes que inspiraron este proyecto
+Comunidad médica en redes sociales
+
+/* SITE */
+Last update: 2026/05/27
+Language: Español / English
+Standards: HTML5, CSS3, JavaScript ES6+
+Components: React, Vite, TailwindCSS
+IDE: VS Code
+
+/* PROJECT INFO */
+Name: Triage Tycoon: Resident Life
+Description: Simulador médico de triage para estudiantes y residentes
+License: MIT
+Repository: https://github.com/pataforista/triagemovil
