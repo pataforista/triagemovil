@@ -3,11 +3,15 @@ import ElectricBorder from './ui/ElectricBorder';
 
 export default function TutorialModal({ onClose }) {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 anim-pop">
-            <ElectricBorder color="#22d3ee" className="max-w-md w-full max-h-[90vh] overflow-hidden bg-slate-900">
-                <div className="flex flex-col h-full bg-slate-900 p-6 overflow-y-auto custom-scrollbar">
+        <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 anim-pop"
+            onClick={onClose}
+        >
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md">
+                <ElectricBorder color="#22d3ee" className="w-full max-h-[90vh] overflow-hidden bg-slate-900">
+                    <div className="flex flex-col h-full bg-slate-900 p-6 overflow-y-auto custom-scrollbar">
 
-                    <h2 className="text-2xl font-bold text-center text-cyan-400 mb-6 neon-text">MANUAL DE RESIDENTE</h2>
+                        <h2 className="text-2xl font-bold text-center text-cyan-400 mb-6 neon-text">MANUAL DE RESIDENTE</h2>
 
                     <div className="space-y-6 text-sm text-slate-300">
 
@@ -70,6 +74,7 @@ export default function TutorialModal({ onClose }) {
                     </button>
                 </div>
             </ElectricBorder>
+            </div>
         </div>
     );
 }

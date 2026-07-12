@@ -209,6 +209,10 @@ const randint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 let ADMISSION_HISTORY = [];     // Guarda objetos { diag, type }
 const MAX_HISTORY = 50;
 
+export function resetPatientHistory() {
+    ADMISSION_HISTORY = [];
+}
+
 export function generatePatient(levelId) {
     // 1. Construir pool base según nivel
     let pool = [];
@@ -244,7 +248,8 @@ export function generatePatient(levelId) {
 
     // 5. Retornar paciente con datos aleatorios de nombre, edad y texto
     return {
-        id: Date.now() + Math.random(),
+        id: crypto.randomUUID(),
+        spawnTime: Date.now(),
         name: random(NAMES),
         age: randint(18, 85),
         type: base.type,

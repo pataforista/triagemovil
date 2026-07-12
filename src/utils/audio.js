@@ -74,3 +74,55 @@ export const playAlarm = () => {
     playTone(987.77, 'sine', 0.12, vol, 0.0);      // B5
     playTone(987.77, 'sine', 0.12, vol, 0.18);     // B5 double tap
 };
+
+let ambientOsc = null;
+let ambientGain = null;
+let lfo = null;
+
+export const playAmbient = () => {
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return;
+    
+    stopAmbient(); // in case it's already running
+
+    ambientOsc = audioCtx.createOscillator();
+    ambientOsc.type = 'sine';
+    ambientOsc.frequency.value = 65; // low heartbeat frequency
+
+    lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 1.33; // ~80 BPM (80/60 = 1.33 Hz)
+
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 10; // modulation depth
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(ambientOsc.frequency);
+
+    ambientGain = audioCtx.createGain();
+    ambientGain.gain.value = 0.015; // very low volume
+
+    ambientOsc.connect(ambientGain);
+    ambientGain.connect(audioCtx.destination);
+
+    ambientOsc.start();
+    lfo.start();
+};
+
+export const stopAmbient = () => {
+    if (ambientOsc) {
+        try { ambientOsc.stop(); } catch(e) {}
+        ambientOsc.disconnect();
+        ambientOsc = null;
+    }
+    if (lfo) {
+        try { lfo.stop(); } catch(e) {}
+        lfo.disconnect();
+        lfo = null;
+    }
+    if (ambientGain) {
+        ambientGain.disconnect();
+        ambientGain = null;
+    }
+};
+

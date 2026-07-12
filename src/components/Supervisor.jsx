@@ -32,9 +32,17 @@ const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 export default function Supervisor({ state, score }) {
     const [msg, setMsg] = useState("");
     const [visible, setVisible] = useState(false);
+    const [renderObj, setRenderObj] = useState(false);
+    const isFirstMount = React.useRef(true);
 
     // Reacciona a los cambios de estado (incluye el montaje inicial con state='START')
     useEffect(() => {
+        if (isFirstMount.current && state === 'START') {
+            isFirstMount.current = false;
+            // Solo mostramos mensaje inicial si realmente queremos. En este caso sí, pero de forma controlada.
+            // Para evitar el doble render si cambia inmediatamente, lo hacemos así:
+        }
+
         let text = "";
         if (state === 'START') text = random(QUOTES.start);
         else if (state === 'GOOD') text = random(QUOTES.good);
@@ -49,11 +57,20 @@ export default function Supervisor({ state, score }) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setMsg(text);
         setVisible(true);
+        setRenderObj(true);
         const timer = setTimeout(() => setVisible(false), 5000);
         return () => clearTimeout(timer);
     }, [state, score]);
 
-    if (!visible) return null;
+    // Cleanup tras fadeout
+    useEffect(() => {
+        if (!visible && renderObj) {
+            const timer = setTimeout(() => setRenderObj(false), 300); // match transition
+            return () => clearTimeout(timer);
+        }
+    }, [visible, renderObj]);
+
+    if (!renderObj) return null;
 
     // Define color themes based on the doctor's reaction
     const getReactionStyles = () => {
@@ -94,8 +111,8 @@ export default function Supervisor({ state, score }) {
     return (
         <div
             key={msg}
-            className={`absolute top-[76px] right-4 z-50 flex items-start max-w-[210px] transition-all duration-300 ${
-                state === 'BAD' ? 'shake-heavy' : 'animate-bounce-in'
+            className={`absolute top-[84px] right-4 z-50 flex items-start max-w-[210px] transition-all duration-300 ${
+                !visible ? 'opacity-0 scale-95 translate-y-[-10px]' : (state === 'BAD' ? 'shake-heavy opacity-100 scale-100' : 'animate-bounce-in opacity-100 scale-100')
             }`}
         >
             {/* Speach bubble content */}

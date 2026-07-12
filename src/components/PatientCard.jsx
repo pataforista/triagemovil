@@ -144,7 +144,7 @@ export default function PatientCard({ p, onAssign }) {
 
     return (
         <div 
-            className="glass card-vibrant p-5 mb-4 patient-enter flex flex-col gap-4 border-l-[6px] relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300 shadow-lg"
+            className="glass card-vibrant p-5 mb-4 patient-enter-flash flex flex-col gap-4 border-l-[6px] relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300 shadow-lg"
             style={{ 
                 borderColor: borderColor,
                 boxShadow: `0 8px 30px -10px ${shadowColor}`
@@ -198,8 +198,8 @@ export default function PatientCard({ p, onAssign }) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-base">{badge.icon}</span>
-                                <span className="font-extrabold text-sm tracking-tight text-white leading-none">
+                                <span className="text-lg">{badge.icon}</span>
+                                <span className="font-extrabold text-base tracking-tight text-white leading-none">
                                     {badge.value}
                                 </span>
                             </div>
@@ -212,7 +212,7 @@ export default function PatientCard({ p, onAssign }) {
             <div className="grid grid-cols-3 gap-2.5 z-10 mt-1">
                 <button 
                     onClick={() => { playPop(); onAssign(p, 'ALTA'); }} 
-                    className="btn-premium btn-alta py-3 relative group overflow-hidden border border-teal-400/20 hover:shadow-[0_0_15px_rgba(45,212,191,0.4)]"
+                    className="btn-premium btn-alta py-3 relative group overflow-hidden border border-teal-400/20 hover:shadow-[0_0_15px_rgba(45,212,191,0.4)] active:scale-95 active:brightness-150 transition-all"
                 >
                     <span className="relative z-10 flex items-center justify-center gap-1">
                         <span>🏠</span> ALTA
@@ -220,7 +220,7 @@ export default function PatientCard({ p, onAssign }) {
                 </button>
                 <button 
                     onClick={() => { playPop(); onAssign(p, 'OBS'); }} 
-                    className="btn-premium btn-obs py-3 relative group overflow-hidden border border-yellow-400/20 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                    className="btn-premium btn-obs py-3 relative group overflow-hidden border border-yellow-400/20 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] active:scale-95 active:brightness-150 transition-all"
                 >
                     <span className="relative z-10 flex items-center justify-center gap-1">
                         <span>🟡</span> OBS
@@ -228,7 +228,7 @@ export default function PatientCard({ p, onAssign }) {
                 </button>
                 <button 
                     onClick={() => { playPop(); onAssign(p, 'UCE'); }} 
-                    className="btn-premium btn-uce py-3 relative group overflow-hidden border border-rose-400/20 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)]"
+                    className="btn-premium btn-uce py-3 relative group overflow-hidden border border-rose-400/20 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] active:scale-95 active:brightness-150 transition-all"
                 >
                     <span className="relative z-10 flex items-center justify-center gap-1">
                         <span>🚨</span> UCE

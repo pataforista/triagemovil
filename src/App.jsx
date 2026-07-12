@@ -16,6 +16,7 @@ function App() {
     const saved = localStorage.getItem('triage_last_score');
     return saved ? parseInt(saved, 10) : 0;
   });
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Sync state changes with localStorage
   useEffect(() => {
@@ -34,7 +35,11 @@ function App() {
 
   const handleLevelComplete = (finalScore) => {
     setLastScore(finalScore);
-    setPhase('REPORT');
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setPhase('REPORT');
+      setTimeout(() => setIsTransitioning(false), 50); // reset after phase change
+    }, 500); // 500ms transition
   };
 
   const nextLevel = () => {
@@ -50,16 +55,24 @@ function App() {
   };
 
   const resetProgress = () => {
-    localStorage.clear();
-    setPhase('INTRO');
-    setLevelIndex(0);
-    setLastScore(0);
+    if (window.confirm("¿Seguro que quieres borrar todo tu progreso?")) {
+      localStorage.clear();
+      setPhase('INTRO');
+      setLevelIndex(0);
+      setLastScore(0);
+    }
   };
 
   return (
     <div className="h-full w-full max-w-md mx-auto relative shadow-2xl overflow-hidden glass-panel">
       <div className="game-background"></div>
       
+      {/* Cinematic Transition Overlay */}
+      <div 
+        className={`fixed inset-0 z-[9999] bg-slate-950 pointer-events-none transition-all duration-500 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
+        style={{ clipPath: isTransitioning ? 'circle(100% at center)' : 'circle(0% at center)' }}
+      ></div>
+
       {/* Dynamic residency reset helper button in Intro */}
       {phase === 'INTRO' && levelIndex > 0 && (
         <button 
