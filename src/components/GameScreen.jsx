@@ -19,6 +19,7 @@ export default function GameScreen({ levelData, onLevelComplete }) {
 
     const [supState, setSupState] = useState('START');
     const [combo, setCombo] = useState(0);
+    const [errorStreak, setErrorStreak] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
 
     // Refs for safe callback from interval
@@ -113,6 +114,7 @@ export default function GameScreen({ levelData, onLevelComplete }) {
             setScore(s => s + points);
             currentCombo += 1;
             setCombo(currentCombo);
+            setErrorStreak(0); // Resetea la racha de errores al acertar
 
             if (currentCombo >= 3) {
                 setSupState('COMBO');
@@ -125,6 +127,17 @@ export default function GameScreen({ levelData, onLevelComplete }) {
             playError();
             currentCombo = 0;
             setCombo(0);
+            
+            setErrorStreak(prev => {
+                const newStreak = prev + 1;
+                // Mecánica de piedad: cada 3 errores seguidos, regala tiempo.
+                if (newStreak >= 3) {
+                    setTimeLeft(t => t + 15);
+                    setTimeout(() => pushAlert('Respira hondo doctor. Tómate tu tiempo (+15s)', 'success'), 500);
+                    return 0;
+                }
+                return newStreak;
+            });
             
             if (p.real && p.type === 'ALTA' && decision !== 'ALTA') {
                 // False negative
