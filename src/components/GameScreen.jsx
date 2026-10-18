@@ -1,360 +1,255 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { generatePatient, resetPatientHistory } from '../data/patients';
+import { useEffect, useRef, useState } from 'react';
 import PatientCard from './PatientCard';
 import Supervisor from './Supervisor';
-import { playError, playPop, playAmbient, stopAmbient } from '../utils/audio';
+import SoundToggle from './SoundToggle';
+import Ward from './Ward';
+import { generatePatient, resetPatientHistory } from '../data/patients';
+import { RULES, admitToBed, evaluateDecision, tickBeds } from '../game/rules';
+import {
+  playArrival,
+  playBlocked,
+  playBreath,
+  playCorrect,
+  playCritical,
+  playError,
+  playGoal,
+  playMonitor,
+  playPop,
+  playWhistle,
+} from '../utils/audio';
+import { vibrateError, vibratePop, vibrateSuccess } from '../utils/haptics';
 
-export default function GameScreen({ levelData, onLevelComplete }) {
-    const [timeLeft, setTimeLeft] = useState(levelData.time);
-    const [score, setScore] = useState(0);
-    const [waiting, setWaiting] = useState([]);
-    
-    // Beds are now { patient, timeLeft, maxTime, initial }
-    const [bedsOBS, setBedsOBS] = useState(Array(levelData.beds).fill(null));
-    const [bedsUCE, setBedsUCE] = useState(Array(levelData.uce).fill(null));
-    
-    // { msg: string, type: 'success' | 'error' | 'warning' }
-    const [alert, setAlert] = useState(null); 
-    const [alertKey, setAlertKey] = useState(0);
+const MAX_WAITING = 10;
+const EXIT_MS = 300; // duración de la animación de salida de la tarjeta
+const URGENT_SECONDS = 10;
 
-    const [supState, setSupState] = useState('START');
-    const [combo, setCombo] = useState(0);
-    const [errorStreak, setErrorStreak] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
+export default function GameScreen({ level, onFinish }) {
+  const [timeLeft, setTimeLeft] = useState(level.duration);
+  const [score, setScore] = useState(0);
+  const [waiting, setWaiting] = useState(() => {
+    resetPatientHistory();
+    return [generatePatient(level.id)];
+  });
+  const [beds, setBeds] = useState(() => ({
+    OBS: Array(level.beds).fill(null),
+    UCE: Array(level.uce).fill(null),
+  }));
+  const [combo, setCombo] = useState(0);
+  const [errorStreak, setErrorStreak] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [toast, setToast] = useState(null); // { id, msg, tone }
+  const [reaction, setReaction] = useState({ id: 0, mood: 'START' });
+  const [delta, setDelta] = useState(null); // { id, value } puntos flotantes
+  const [goalReached, setGoalReached] = useState(false);
 
-    // Refs for safe callback from interval
-    const scoreRef = useRef(score);
-    const onLevelCompleteRef = useRef(onLevelComplete);
-    const lastTickRef = useRef(Date.now());
-    
-    useEffect(() => { scoreRef.current = score; }, [score]);
-    useEffect(() => { onLevelCompleteRef.current = onLevelComplete; }, [onLevelComplete]);
+  const over = timeLeft <= 0;
+  const running = !paused && !over;
+  const urgent = running && timeLeft <= URGENT_SECONDS;
+  // Pacientes que siguen en espera (sin contar las tarjetas que están saliendo).
+  const queue = waiting.filter((p) => !p.exiting);
+  const queueSize = useRef(queue.length);
+  useEffect(() => {
+    queueSize.current = queue.length;
+  });
 
-    // Initial Setup
-    useEffect(() => {
-        resetPatientHistory();
-        playAmbient();
-        setSupState('START');
-        return () => stopAmbient();
-    }, [levelData.id]);
+  // Reloj: 1 tick por segundo para la guardia y las camas.
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTimeLeft((t) => Math.max(0, t - 1));
+      setBeds((b) => ({ OBS: tickBeds(b.OBS), UCE: tickBeds(b.UCE) }));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running]);
 
-    // Main Game Timer & Bed Manager
-    useEffect(() => {
-        if (isPaused) return;
+  // Pitido de monitor: tenue cada 2 s; agudo cada segundo en los últimos 10 s.
+  useEffect(() => {
+    if (!running) return;
+    if (timeLeft <= URGENT_SECONDS) playMonitor(true);
+    else if (timeLeft % 2 === 0) playMonitor(false);
+  }, [timeLeft, running]);
 
-        lastTickRef.current = Date.now();
-        const timer = setInterval(() => {
-            const now = Date.now();
-            const deltaSecs = Math.round((now - lastTickRef.current) / 1000);
-            
-            if (deltaSecs >= 1) {
-                lastTickRef.current = now;
-                
-                setTimeLeft(prev => {
-                    const next = Math.max(0, prev - deltaSecs);
-                    if (next <= 0) {
-                        setTimeout(() => onLevelCompleteRef.current(scoreRef.current), 0);
-                    }
-                    return next;
-                });
+  // Llegada de pacientes.
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      if (queueSize.current >= MAX_WAITING) return;
+      const patient = generatePatient(level.id);
+      queueSize.current += 1;
+      playArrival();
+      setWaiting((w) => [...w, patient]);
+    }, level.spawnRate);
+    return () => clearInterval(id);
+  }, [running, level.id, level.spawnRate]);
 
-                // Update beds time
-                setBedsOBS(curr => curr.map(b => {
-                    if (!b) return null;
-                    const newTime = b.timeLeft - deltaSecs;
-                    return newTime <= 0 ? null : { ...b, timeLeft: newTime };
-                }));
+  // Fin de la guardia: silbato y aviso al padre una sola vez (con una pausa breve para el efecto).
+  const finished = useRef(false);
+  useEffect(() => {
+    if (!over || finished.current) return;
+    finished.current = true;
+    playWhistle();
+    const t = setTimeout(() => onFinish(score), 700);
+    return () => clearTimeout(t);
+  }, [over, score, onFinish]);
 
-                setBedsUCE(curr => curr.map(b => {
-                    if (!b) return null;
-                    const newTime = b.timeLeft - deltaSecs;
-                    return newTime <= 0 ? null : { ...b, timeLeft: newTime };
-                }));
-            }
-        }, 1000); // 1s tick
+  // Pausa automática si el usuario cambia de app o bloquea el teléfono.
+  useEffect(() => {
+    const onHide = () => document.hidden && setPaused(true);
+    document.addEventListener('visibilitychange', onHide);
+    return () => document.removeEventListener('visibilitychange', onHide);
+  }, []);
 
-        return () => clearInterval(timer);
-    }, [isPaused]);
+  const notify = (msg, tone) => setToast({ id: Date.now(), msg, tone });
 
-    // Patient Spawner
-    useEffect(() => {
-        if (isPaused) return;
+  const handleAssign = (patient, decision) => {
+    if (!running || patient.exiting) return;
 
-        const spawner = setInterval(() => {
-            setWaiting(prev => {
-                if (prev.length < 10) {
-                    return [...prev, generatePatient(levelData.id)];
-                }
-                return prev;
-            });
-        }, levelData.spawnRate);
+    // La tarjeta se marca como "saliendo" para animarla y se retira al terminar.
+    setWaiting((w) => w.map((p) => (p.id === patient.id ? { ...p, exiting: decision } : p)));
+    setTimeout(() => setWaiting((w) => w.filter((p) => p.id !== patient.id)), EXIT_MS);
 
-        return () => clearInterval(spawner);
-    }, [levelData, isPaused]);
+    const r = evaluateDecision(patient, decision);
+    let points = r.points;
+    let nextCombo = 0;
+    const messages = [];
 
-    const pushAlert = (msg, type = 'success') => {
-        setAlertKey(k => k + 1);
-        setAlert({ msg, type });
-    };
+    if (r.correct) {
+      nextCombo = combo + 1;
+      playCorrect(nextCombo);
+      vibratePop();
+      setErrorStreak(0);
+      messages.push(`${nextCombo >= RULES.comboThreshold ? `Racha x${nextCombo}` : 'Acierto'} +${r.points}${r.fast ? ' ⚡' : ''}`);
+      setReaction((s) => ({ id: s.id + 1, mood: nextCombo >= RULES.comboThreshold ? 'COMBO' : 'GOOD' }));
+    } else {
+      (r.undertriage ? playCritical : playError)();
+      vibrateError();
+      messages.push(`${r.undertriage ? '¡Error crítico! ' : ''}Era ${r.expected}: ${patient.diag} (${r.points})`);
+      setReaction((s) => ({ id: s.id + 1, mood: 'BAD' }));
+      const streak = errorStreak + 1;
+      if (streak >= RULES.pityErrors) {
+        setTimeLeft((t) => t + RULES.pitySeconds);
+        setTimeout(playBreath, 350);
+        messages.push(`Respira hondo (+${RULES.pitySeconds} s)`);
+        setErrorStreak(0);
+      } else {
+        setErrorStreak(streak);
+      }
+    }
 
-    const handleAssign = (p, decision) => {
-        if (isPaused) return;
+    if (decision !== 'ALTA') {
+      const next = admitToBed(beds[decision], patient, decision);
+      if (next) {
+        setBeds((b) => ({ ...b, [decision]: next }));
+      } else {
+        const penalty = decision === 'OBS' ? RULES.fullObsPenalty : RULES.fullUcePenalty;
+        points -= penalty;
+        nextCombo = 0;
+        setTimeout(playBlocked, 120);
+        messages.push(`${decision} llena (−${penalty})`);
+      }
+    }
 
-        setWaiting(prev => prev.filter(x => x.id !== p.id));
+    const newScore = score + points;
+    if (!goalReached && newScore >= level.goal) {
+      setGoalReached(true);
+      vibrateSuccess();
+      setTimeout(playGoal, 250);
+      messages.push('¡Meta alcanzada! 🍽️');
+    }
 
-        let currentCombo = combo;
-        let points = 0;
-        let speedBonus = 0;
-        const timeToTriage = Date.now() - p.spawnTime;
+    setScore(newScore);
+    setDelta({ id: Date.now(), value: points });
+    setCombo(nextCombo);
+    notify(messages.join(' · '), r.correct ? 'ok' : 'bad');
+  };
 
-        if (timeToTriage < 3000) speedBonus = 10;
+  const togglePause = () => {
+    playPop();
+    setPaused((p) => !p);
+  };
 
-        if (p.type === decision) {
-            points = p.score + speedBonus;
-            setScore(s => s + points);
-            currentCombo += 1;
-            setCombo(currentCombo);
-            setErrorStreak(0); // Resetea la racha de errores al acertar
+  const progress = Math.max(0, Math.min((score / level.goal) * 100, 100));
+  const [levelTag, levelTitle] = level.name.split(': ');
 
-            if (currentCombo >= 3) {
-                setSupState('COMBO');
-                pushAlert(`¡RACHA x${currentCombo}! +${points}${speedBonus > 0 ? ' ⚡ RAPIDEZ' : ''}`, 'success');
-            } else {
-                setSupState('GOOD');
-                pushAlert(`¡Acierto! +${points}${speedBonus > 0 ? ' ⚡ RAPIDEZ' : ''}`, 'success');
-            }
-        } else {
-            playError();
-            currentCombo = 0;
-            setCombo(0);
-            
-            setErrorStreak(prev => {
-                const newStreak = prev + 1;
-                // Mecánica de piedad: cada 3 errores seguidos, regala tiempo.
-                if (newStreak >= 3) {
-                    setTimeLeft(t => t + 15);
-                    setTimeout(() => pushAlert('Respira hondo doctor. Tómate tu tiempo (+15s)', 'success'), 500);
-                    return 0;
-                }
-                return newStreak;
-            });
-            
-            if (p.real && p.type === 'ALTA' && decision !== 'ALTA') {
-                // False negative
-                setScore(s => s - 20);
-                setSupState('BAD');
-                pushAlert(`¡Error Crítico! Mandaste de alta a un paciente real. (-20)`, 'error');
-            } else {
-                setScore(s => s - 10);
-                setSupState('BAD');
-                pushAlert(`Diagnóstico incorrecto. Era ${p.type}. (-10)`, 'error');
-            }
-        }
-
-        // Assign to bed
-        if (decision === 'OBS') {
-            const idx = bedsOBS.findIndex(b => b === null);
-            if (idx !== -1) {
-                let newBeds = [...bedsOBS];
-                newBeds[idx] = { patient: p, timeLeft: 6, maxTime: 6, initial: p.name.charAt(0) };
-                setBedsOBS(newBeds);
-            } else {
-                playError();
-                setScore(s => s - 5);
-                pushAlert('¡Sala OBS llena! Penalización (-5)', 'warning');
-                setCombo(0);
-            }
-        } else if (decision === 'UCE') {
-            const idx = bedsUCE.findIndex(b => b === null);
-            if (idx !== -1) {
-                let newBeds = [...bedsUCE];
-                newBeds[idx] = { patient: p, timeLeft: 12, maxTime: 12, initial: p.name.charAt(0) };
-                setBedsUCE(newBeds);
-            } else {
-                playError();
-                setScore(s => s - 10);
-                pushAlert('¡UCE llena! Peligro inminente (-10)', 'error');
-                setCombo(0);
-            }
-        }
-    };
-
-    const togglePause = () => {
-        playPop();
-        setIsPaused(!isPaused);
-        if (!isPaused) {
-            stopAmbient();
-        } else {
-            playAmbient();
-        }
-    };
-
-    // Calculate progress (0 to 100)
-    const progress = Math.min((score / levelData.goal) * 100, 100);
-
-    return (
-        <div className="flex flex-col h-full bg-slate-950 relative">
-            {/* Ambient Lighting Volumetric Beams (Reduced Opacity) */}
-            <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-600/20 blur-[100px] rounded-full"></div>
-                <div className="absolute top-[40%] right-[-20%] w-[60%] h-[60%] bg-rose-600/10 blur-[120px] rounded-full"></div>
-            </div>
-
-            {/* Top Header HUD */}
-            <header className="pt-2 px-4 pb-2 z-20 bg-gradient-to-b from-slate-950/90 to-transparent shadow-[0_10px_30px_-15px_rgba(0,0,0,0.8)] backdrop-blur-sm border-b border-white/5">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                        {/* Pause Button */}
-                        <button 
-                            onClick={togglePause}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800/80 border border-slate-600/50 hover:bg-slate-700 transition active:scale-95 shadow-md"
-                        >
-                            <span className="text-xl leading-none translate-y-[-1px]">{isPaused ? '▶️' : '⏸️'}</span>
-                        </button>
-
-                        <div className="hud-pill flex items-center justify-center min-w-[90px] border border-emerald-500/30 bg-slate-900/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] relative overflow-hidden group">
-                            {/* Animated Dinner Progress Fill */}
-                            <div 
-                                className="absolute top-0 left-0 bottom-0 bg-emerald-500/30 transition-all duration-700 ease-out z-0" 
-                                style={{ width: `${progress}%` }} 
-                            />
-                            <div className="relative z-10 flex flex-col items-center justify-center h-full">
-                                <span className="text-[8px] font-black tracking-widest text-emerald-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] leading-[1]">
-                                    PREMIO
-                                </span>
-                                <span className="text-base font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] leading-[1] mt-0.5 hud-font">
-                                    ${score}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Combo Indicator */}
-                        {combo > 1 && (
-                            <div className="hud-pill bg-orange-500/20 border border-orange-500/50 flex items-center justify-center shadow-[0_0_10px_rgba(249,115,22,0.3)] animate-bounce-in">
-                                <span className="text-sm font-black text-orange-400">🔥 x{combo}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {/* Timer */}
-                        <div className="hud-pill flex items-center gap-2 bg-slate-950/60 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]">
-                            <svg viewBox="0 0 100 20" className={`w-8 h-4 transition-all duration-300 ${timeLeft < 15 ? 'text-rose-500 animate-[ping_0.5s_infinite]' : 'text-cyan-400 opacity-60'}`}>
-                                <path d="M 0 10 L 25 10 L 32 3 L 40 17 L 48 10 L 100 10" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            <span className={`text-lg font-black hud-font leading-none ${timeLeft < 15 ? 'text-rose-500 animate-pulse' : 'text-yellow-400'}`}>
-                                {timeLeft}s
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-end border-b border-white/10 pb-1.5 mt-1">
-                    <div>
-                        <h1 className="text-lg font-extrabold text-white tracking-tight leading-tight">{levelData.name}</h1>
-                        <p className="text-[8px] text-cyan-400 uppercase font-black tracking-[0.2em] mt-0.5 opacity-80">
-                            Meta: <span className="text-white font-extrabold">${levelData.goal}</span>
-                        </p>
-                    </div>
-                    <div className="text-[8px] hud-font text-white/40 tracking-wider">
-                        DEPT: EMER-R1-0{levelData.id}
-                    </div>
-                </div>
-            </header>
-
-            {/* Dr. Jaspers */}
-            <Supervisor state={supState} score={score} />
-
-            {alert && (
-                <div key={alertKey} className={`alert-float alert-${alert.type}`}>
-                    {alert.msg}
-                </div>
-            )}
-
-            {/* Waiting list */}
-            <main className="flex-1 overflow-y-auto px-4 pt-2 scroll-hide z-10 pb-56 custom-scrollbar relative">
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shadow-[0_0_8px_rgba(52,211,153,1)]"></div>
-                    <h3 className="text-slate-400 text-[9px] font-bold tracking-[0.25em] uppercase">Pacientes ({waiting.length})</h3>
-                </div>
-
-                {waiting.map(p => (
-                    <PatientCard key={p.id} p={p} onAssign={handleAssign} />
-                ))}
-
-                {waiting.length === 0 && (
-                    <div className="h-64 flex flex-col items-center justify-center text-slate-500 opacity-20">
-                        <div className="text-7xl mb-4 animate-[bounce_2s_infinite]">🩺</div>
-                        <p className="hud-font text-[10px] uppercase tracking-[0.4em] animate-pulse">Telemetry Loop Standby...</p>
-                    </div>
-                )}
-            </main>
-
-            {/* Pause Overlay */}
-            {isPaused && (
-                <div className="absolute inset-0 z-40 bg-slate-950/60 backdrop-blur-md flex flex-col items-center justify-center">
-                    <div className="text-6xl mb-4">⏸️</div>
-                    <h2 className="text-3xl font-black text-white neon-text tracking-widest">EN PAUSA</h2>
-                    <p className="text-slate-400 mt-2 font-bold tracking-widest text-sm uppercase">Toca el botón para reanudar</p>
-                </div>
-            )}
-
-            {/* Ward Monitors */}
-            <footer className="absolute bottom-0 left-0 right-0 p-3 pb-5 z-30 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent">
-                <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-                    {/* OBS */}
-                    <div className="glass p-2 border border-yellow-500/20 bg-slate-950/80 backdrop-blur-md rounded-[20px]">
-                        <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[8px] font-bold text-yellow-500 uppercase tracking-widest flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-ping"></span>
-                                OBS
-                            </span>
-                            <span className="text-[9px] text-white/40 hud-font font-bold">{bedsOBS.filter(b => b).length}/{levelData.beds}</span>
-                        </div>
-                        <div className="flex gap-1.5 justify-center">
-                            {bedsOBS.map((b, i) => (
-                                <div key={i} className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all duration-300 border relative overflow-hidden ${b ? 'bg-yellow-500/10 border-yellow-500/70' : 'bg-slate-900/50 border-white/5 border-dashed'}`}>
-                                    {b ? (
-                                        <>
-                                            <span className="text-lg font-black text-yellow-500 mb-2 z-10">{b.initial}</span>
-                                            <span className="absolute bottom-[6px] text-[10px] font-bold text-yellow-400 z-10">{b.timeLeft}s</span>
-                                            <div className="absolute bottom-0 left-0 h-[4px] bg-yellow-500 transition-all duration-1000 linear" style={{ width: `${(b.timeLeft / b.maxTime) * 100}%` }} />
-                                        </>
-                                    ) : (
-                                        <span className="text-[10px] text-slate-700 font-bold hud-font">0{i+1}</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* UCE */}
-                    <div className="glass p-2 border border-rose-500/20 bg-slate-950/80 backdrop-blur-md rounded-[20px]">
-                        <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[8px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                                UCE
-                            </span>
-                            <span className="text-[9px] text-white/40 hud-font font-bold">{bedsUCE.filter(b => b).length}/{levelData.uce}</span>
-                        </div>
-                        <div className="flex gap-1.5 justify-center">
-                            {bedsUCE.map((b, i) => (
-                                <div key={i} className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all duration-300 border relative overflow-hidden ${b ? 'bg-rose-500/10 border-rose-500/70 critical-pulse' : 'bg-slate-900/50 border-white/5 border-dashed'}`}>
-                                    {b ? (
-                                        <>
-                                            <span className="text-lg font-black text-rose-500 mb-2 z-10">{b.initial}</span>
-                                            <span className="absolute bottom-[6px] text-[10px] font-bold text-rose-400 z-10">{b.timeLeft}s</span>
-                                            <div className="absolute bottom-0 left-0 h-[4px] bg-rose-500 transition-all duration-1000 linear" style={{ width: `${(b.timeLeft / b.maxTime) * 100}%` }} />
-                                        </>
-                                    ) : (
-                                        <span className="text-[10px] text-slate-700 font-bold hud-font">0{i+1}</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </footer>
+  return (
+    <div className="flex-1 flex flex-col min-h-0 relative">
+      {/* La cabecera tiembla en cada error (se remonta con otra key; no tiene estado propio). */}
+      <header
+        key={reaction.mood === 'BAD' ? `hdr-${reaction.id}` : 'hdr'}
+        className={`px-4 pt-3 pb-3 border-b border-white/5 bg-slate-950/70 backdrop-blur-md z-20 ${reaction.mood === 'BAD' ? 'anim-shake' : ''}`}
+      >
+        <div className="flex items-center gap-2">
+          <button onClick={togglePause} className="btn btn-ghost w-11 min-h-[44px] px-0" aria-label={paused ? 'Reanudar' : 'Pausar'}>
+            {paused ? '▶' : '❚❚'}
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">{levelTag}</p>
+            <h1 className="font-extrabold leading-tight truncate">{levelTitle}</h1>
+          </div>
+          <div
+            key={urgent ? `t-${timeLeft}` : "t"}
+            className={`mono text-2xl font-bold tabular-nums ${urgent ? 'text-uce anim-bump' : 'text-slate-100'}`}
+          >
+            {timeLeft}s
+          </div>
         </div>
-    );
+
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuenow={score} aria-valuemax={level.goal}>
+            <div
+              className={`h-full transition-[width] duration-500 ease-out ${goalReached ? 'bar-goal' : 'bg-gradient-to-r from-sky-500 to-alta'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="relative mono text-sm font-bold tabular-nums">
+            <span key={`score-${score}`} className={score ? 'anim-bump' : ''}>${score}</span>
+            <span className="text-slate-500">/{level.goal}</span>
+            {delta && (
+              <span key={`delta-${delta.id}`} className={`float-points text-sm ${delta.value >= 0 ? 'text-alta' : 'text-uce'}`}>
+                {delta.value >= 0 ? `+${delta.value}` : delta.value}
+              </span>
+            )}
+          </span>
+          {combo > 1 && (
+            <span key={`combo-${combo}`} className="text-sm font-black text-orange-400 anim-pop">🔥x{combo}</span>
+          )}
+        </div>
+      </header>
+
+      <Supervisor key={`sup-${reaction.id}`} mood={reaction.mood} />
+      {toast && (
+        <div key={`toast-${toast.id}`} className={`toast bottom-32 ${toast.tone === 'ok' ? 'text-alta' : 'text-uce'}`} role="status">
+          {toast.msg}
+        </div>
+      )}
+      {reaction.id > 0 && (
+        <div key={`flash-${reaction.id}`} className={`screen-flash ${reaction.mood === 'BAD' ? 'screen-flash-bad' : 'screen-flash-ok'}`} />
+      )}
+      {urgent && <div className="urgent-vignette" />}
+
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar px-4 pt-3">
+        <p className="eyebrow mb-2">Sala de espera · {queue.length}</p>
+        {waiting.map((p) => (
+          <PatientCard key={p.id} patient={p} onAssign={handleAssign} disabled={!running} />
+        ))}
+        {waiting.length === 0 && (
+          <p className="text-center text-slate-500 py-16 anim-rise">Sala vacía. Disfruta el silencio… dura poco.</p>
+        )}
+      </main>
+
+      <footer className="grid grid-cols-2 gap-2 p-3 border-t border-white/5 bg-slate-950/80 backdrop-blur-md">
+        <Ward area="OBS" beds={beds.OBS} />
+        <Ward area="UCE" beds={beds.UCE} />
+      </footer>
+
+      {paused && (
+        <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 px-8 anim-rise">
+          <h2 className="text-3xl font-black tracking-widest">EN PAUSA</h2>
+          <p className="text-slate-400 text-sm">La sala de espera también se detuvo.</p>
+          <button onClick={togglePause} className="btn btn-primary w-full max-w-xs">Reanudar guardia</button>
+          <SoundToggle />
+        </div>
+      )}
+    </div>
+  );
 }

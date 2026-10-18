@@ -1,13 +1,11 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+// El service worker (PWA) lo registra vite-plugin-pwa automáticamente.
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
-)
-
-// PWA Service Worker is now handled automatically by vite-plugin-pwa (Workbox)
-// No manual registration needed — registerType: 'autoUpdate' manages it.
+  </StrictMode>,
+);

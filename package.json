@@ -1,14 +1,16 @@
 {
   "name": "triage-tycoon",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.2.0",
   "type": "module",
-  "homepage": "https://pataforista.github.io/triagemovil/",
+  "homepage": "https://triagemoviljuego.pages.dev/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "node --test",
+    "check:roadmap": "node scripts/check-roadmap.mjs",
     "generate-icons": "pwa-assets-generator --config pwa-assets.config.js"
   },
   "dependencies": {

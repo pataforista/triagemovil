@@ -25,12 +25,13 @@ export default defineConfig({
         name: 'Triage Tycoon: Resident Life',
         short_name: 'Triage Tycoon',
         description: 'Sobrevive a tus guardias de R1 haciendo triages rápidos y precisos en urgencias.',
-        theme_color: '#0f172a',
-        background_color: '#020617',
+        theme_color: '#050b18',
+        background_color: '#050b18',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        // Relativos al manifest: funcionan en la raíz (Cloudflare) y en /triagemovil/ (GitHub Pages).
+        start_url: '.',
+        scope: '.',
         categories: ['games', 'education'],
         lang: 'es-MX',
         icons: [
@@ -62,6 +63,8 @@ export default defineConfig({
       workbox: {
         // Precache all Vite build outputs automatically (JS, CSS, HTML)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // logo.jpg solo sirve para previsualizaciones en redes; no hace falta offline.
+        globIgnores: ['**/logo.*'],
 
         // Cache Google Fonts with StaleWhileRevalidate (fast offline, silent background update)
         runtimeCaching: [

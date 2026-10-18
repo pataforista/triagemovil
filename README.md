@@ -1,26 +1,17 @@
 # Triage Tycoon: Resident Life
 
-Juego de triaje médico con estética neon y mecánicas rápidas pensado para móviles. Esta versión está construida con **React + Vite** y mantiene el gameplay del prototipo original en HTML único.
+Juego móvil (PWA) de triage en urgencias para residentes: clasifica a cada paciente en **ALTA**, **OBS** o
+**UCE** leyendo su queja y sus signos vitales, sobrevive 8 guardias y gánate la cena.
 
-## Características principales
-- **8 niveles (guardias)** con dificultad creciente, metas de dinero y comidas de guardia.
-- **Clasificación de pacientes** en ALTA, OBS y UCE con puntajes, penalizaciones y alertas.
-- **Trampas clínicas** (casos que parecen psiquiátricos pero son médicos) con bonificaciones/penalizaciones.
-- **Capacidad de camas** en OBS/UCE con penalización cuando están llenas.
-- **Pantallas** de introducción, juego, reporte de guardia y final.
+React + Vite + Tailwind. Sin backend.
 
-## Estructura del proyecto
-- `src/components/`: pantallas y tarjetas del juego.
-- `src/data/`: niveles, pacientes y utilidades de generación.
-- `src/index.css`: estilos globales y utilidades visuales.
-
-## Versión HTML monolítica (referencia)
-El prototipo original sigue disponible como archivo único de referencia:
-- `references/triage_original.html`
-
-Si necesitas modificar datos o lógica, la fuente de verdad es la versión Vite (`src/data/*`, `src/components/*`). El HTML solo se conserva como referencia histórica.
-
-## Desarrollo local
 ```bash
-npm install
-npm run dev
+npm ci
+npm run dev      # desarrollo
+npm test         # pruebas de la lógica
+npm run build    # producción en dist/
+```
+
+**Documentación completa: [`docs/ROADMAP.md`](docs/ROADMAP.md)**: arquitectura, reglas del juego,
+cómo agregar casos y niveles, diseño, despliegue, pendientes y bitácora de cambios.
+Todo cambio a la app debe actualizar ese archivo (lo verifica la CI).
