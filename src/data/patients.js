@@ -1,4 +1,4 @@
-// ======================== NOMBRES EXPANDIDOS ========================
+// ======================== NOMBRES ========================
 export const NAMES = [
     "Carmen", "Jorge", "Pedro", "Luisa", "Marco", "Valeria", "Sofía",
     "Roberto", "Teresa", "Kevin", "Ángel", "Daniela", "Mauricio", "Beatriz",
@@ -16,7 +16,7 @@ export const NAMES = [
     "Emiliano", "Diana", "Omar", "Patricia", "Gilberto", "Verónica", "Salvador", "Rebeca"
 ];
 
-// ======================== CASOS ALTA (70) ========================
+// ======================== CASOS ALTA ========================
 export const CASES_ALTA = [
     { type: "ALTA", score: 80, sprite: "😰", diag: "Ansiedad Situacional", txt: ["Tengo examen mañana y siento que me falta el aire."], vitals: ["FC 90 | Sat 99% | Pulmones limpios"] },
     { type: "ALTA", score: 80, sprite: "😖", diag: "Cefalea tensional", txt: ["Me duele la cabeza como una banda apretada."], vitals: ["FC 78 | TA 120/80 | Neuro focal normal"] },
@@ -96,7 +96,7 @@ export const CASES_ALTA = [
     { type: "ALTA", score: 80, sprite: "🫂", diag: "Duelo complicado (6 meses)", txt: ["Mi hijo murió hace medio año y no salgo adelante."], vitals: ["FC 85 | Sin ideación suicida"] }
 ];
 
-// ======================== CASOS OBS (60) ========================
+// ======================== CASOS OBS ========================
 export const CASES_OBS = [
     { type: "OBS", score: 120, sprite: "😱", diag: "Crisis de Pánico", txt: ["¡Me estoy infartando! ¡Ayuda!"], vitals: ["FC 130 | EKG Sinusal | Troponinas (-)"] },
     { type: "OBS", score: 120, sprite: "💨", diag: "Hiperventilación Psicógena", txt: ["Siento que no me entra aire."], vitals: ["Sat 100% | PaCO2 bajo"] },
@@ -131,7 +131,7 @@ export const CASES_OBS = [
     { type: "OBS", score: 120, sprite: "🗣️", diag: "Síndrome de pseudobulbar", txt: ["Lloro o río sin control, me da vergüenza."], vitals: ["FC 80 | Neurológico estable"] }
 ];
 
-// ======================== CASOS UCE (45) ========================
+// ======================== CASOS UCE ========================
 export const CASES_UCE = [
     { type: "UCE", score: 200, sprite: "🤬", diag: "Agitación Violenta", txt: ["¡Los voy a matar a todos!"], vitals: ["FC 140 | Requiere sujeción"] },
     { type: "UCE", score: 200, sprite: "⚡", diag: "Intox. Cocaína/Met", txt: ["¡Soy Dios! ¡Nada me lastima!"], vitals: ["FC 160 | TA 180/110 | Midriasis"] },
@@ -166,7 +166,7 @@ export const CASES_UCE = [
     { type: "UCE", score: 200, sprite: "🌡️💀", diag: "Golpe de calor", txt: ["(Aturdido, confuso, piel caliente)"], vitals: ["Temp 41.5°C | FC 160 | TA 80/50"] }
 ];
 
-// ======================== CASOS TRAMPA (40) ========================
+// ======================== CASOS TRAMPA (type "TRAP"; el destino correcto está en `real`) ========================
 export const CASES_TRAMPA = [
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍬", diag: "Hipoglucemia severa", txt: ["Agresivo y sudoroso, no responde."], vitals: ["Glu 25 mg/dL | Piel fría | Glasgow 9"] },
     { type: "TRAP", real: "UCE", score: 150, sprite: "🥵", diag: "Meningitis bacteriana", txt: ["Grita y tiene fiebre, no tolera la luz."], vitals: ["Rigidez nuca | Temp 39.5°C | Petequias"] },
@@ -201,63 +201,62 @@ export const CASES_TRAMPA = [
     { type: "TRAP", real: "UCE", score: 150, sprite: "🍽️❌", diag: "Anorexia (Alarma)", txt: ["No como hace días, corazón raro."], vitals: ["FC 45 | IMC 15 | TA 90/60 | Criterios de ingreso UCE"] }
 ];
 
-// ======================== FUNCIÓN DE GENERACIÓN MEJORADA ========================
+// ======================== GENERACIÓN DE PACIENTES ========================
+// Primero se elige la categoría (con pesos por nivel) y después un caso dentro de ella.
+// Así el número de casos escritos por categoría no sesga la dificultad.
+
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const randint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
-// Historial anti-repetición (diagnósticos y tipos)
-let ADMISSION_HISTORY = [];     // Guarda objetos { diag, type }
-const MAX_HISTORY = 50;
+const POOLS = { ALTA: CASES_ALTA, OBS: CASES_OBS, UCE: CASES_UCE, TRAP: CASES_TRAMPA };
+
+/** Probabilidad de cada categoría según el nivel (suman 1). */
+export function categoryWeights(levelId) {
+  if (levelId <= 1) return { ALTA: 0.6, OBS: 0.4, UCE: 0, TRAP: 0 };
+  // Trampas desde la guardia 3: 5 % y suben 5 % por nivel (máx. 30 %).
+  const trap = levelId >= 3 ? Math.min(0.05 * (levelId - 2), 0.3) : 0;
+  const rest = 1 - trap;
+  return { ALTA: rest * 0.4, OBS: rest * 0.3, UCE: rest * 0.3, TRAP: trap };
+}
+
+function pickCategory(levelId) {
+  const weights = categoryWeights(levelId);
+  let r = Math.random();
+  for (const [cat, w] of Object.entries(weights)) {
+    if (r < w) return cat;
+    r -= w;
+  }
+  return 'ALTA';
+}
+
+// Historial anti-repetición de diagnósticos recientes.
+const MAX_HISTORY = 40;
+let recent = [];
+let nextId = 1;
 
 export function resetPatientHistory() {
-    ADMISSION_HISTORY = [];
+  recent = [];
 }
 
 export function generatePatient(levelId) {
-    // 1. Construir pool base según nivel
-    let pool = [];
-    if (levelId === 1) {
-        pool = [...CASES_ALTA];
-    } else {
-        pool = [...CASES_ALTA, ...CASES_OBS];
-        if (levelId >= 2) pool = [...pool, ...CASES_UCE];
-        // Las trampas se incluyen con probabilidad progresiva (nivel 3: 5%, nivel 8: 30%)
-        if (levelId >= 3) {
-            let trapProb = 0.05 + (levelId - 3) * 0.05;
-            trapProb = Math.min(trapProb, 0.35);
-            if (Math.random() < trapProb) {
-                // Si sale trampa, solo mostramos trampas (pero aseguramos variedad)
-                pool = [...CASES_TRAMPA];
-            } else {
-                pool = [...pool, ...CASES_TRAMPA];
-            }
-        }
-    }
+  const pool = POOLS[pickCategory(levelId)];
+  const fresh = pool.filter((c) => !recent.includes(c.diag));
+  const base = random(fresh.length ? fresh : pool);
 
-    // 2. Filtrar por historial para evitar repetición reciente
-    let filteredPool = pool.filter(p => !ADMISSION_HISTORY.some(h => h.diag === p.diag));
-    // Si el filtrado deja menos de 5 opciones, usamos el pool original (pero con penalización)
-    let finalPool = filteredPool.length >= 5 ? filteredPool : pool;
+  recent.push(base.diag);
+  if (recent.length > MAX_HISTORY) recent.shift();
 
-    // 3. Seleccionar caso base
-    const base = random(finalPool);
-
-    // 4. Actualizar historial
-    ADMISSION_HISTORY.push({ diag: base.diag, type: base.type });
-    if (ADMISSION_HISTORY.length > MAX_HISTORY) ADMISSION_HISTORY.shift();
-
-    // 5. Retornar paciente con datos aleatorios de nombre, edad y texto
-    return {
-        id: crypto.randomUUID(),
-        spawnTime: Date.now(),
-        name: random(NAMES),
-        age: randint(18, 85),
-        type: base.type,
-        real: base.real || null,
-        diag: base.diag,
-        score: base.score,
-        sprite: base.sprite,
-        complaint: random(base.txt),
-        vitals: random(base.vitals)
-    };
+  return {
+    id: nextId++,
+    spawnTime: Date.now(),
+    name: random(NAMES),
+    age: randint(18, 85),
+    type: base.type,
+    real: base.real ?? null,
+    diag: base.diag,
+    score: base.score,
+    sprite: base.sprite,
+    complaint: random(base.txt),
+    vitals: random(base.vitals),
+  };
 }

@@ -1,146 +1,49 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-// A sarcastic senior doctor
+// Dr. Jaspers, el adscrito sarcástico. Reacciona a cada decisión del jugador.
 const QUOTES = {
-    start: [
-        "¿Ya terminaste tu café? Los pacientes no se curan solos.",
-        "Mira, un residente nuevo. A ver cuánto duras sin llorar.",
-        "Si matas a alguien, asegúrate de llenar el formulario correcto.",
-        "La medicina es simple: entra aire, sale aire. No lo arruines."
-    ],
-    good: [
-        "No estuvo mal. Para ser tú.",
-        "Aceptable. Siguiente.",
-        "¿Leíste un libro de medicina por fin?",
-        "Mmm. ¿Suerte de principiante?"
-    ],
-    bad: [
-        "¿Estás intentando reducir la población mundial?",
-        "Eso fue vergonzoso. Incluso para un R1.",
-        "Mis plantas tienen mejor criterio clínico.",
-        "¿Dónde compraste tu título? ¿En una caja de cereal?"
-    ],
-    combo: [
-        "¡Estás en racha! No te emociones.",
-        "Vaya, parece que sabes lo que haces.",
-        "Impresionante. Casi pareces un doctor de verdad."
-    ]
+  START: [
+    '¿Ya terminaste tu café? Los pacientes no se curan solos.',
+    'Mira, un residente nuevo. A ver cuánto duras.',
+    'La medicina es simple: entra aire, sale aire. No lo arruines.',
+  ],
+  GOOD: ['No estuvo mal. Para ser tú.', 'Aceptable. Siguiente.', '¿Por fin leíste un libro?', 'Mmm. ¿Suerte de principiante?'],
+  BAD: [
+    '¿Intentas reducir la población mundial?',
+    'Eso fue vergonzoso. Incluso para un R1.',
+    'Mis plantas tienen mejor criterio clínico.',
+    '¿Tu título venía en una caja de cereal?',
+  ],
+  COMBO: ['Estás en racha. No te emociones.', 'Vaya, parece que sabes lo que haces.', 'Casi pareces un doctor de verdad.'],
 };
 
-const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const FACES = { START: '👨‍⚕️', GOOD: '👨‍⚕️', COMBO: '😎', BAD: '😡' };
+const TONE = { START: 'border-l-sky-400', GOOD: 'border-l-alta', COMBO: 'border-l-alta', BAD: 'border-l-uce' };
 
-export default function Supervisor({ state, score }) {
-    const [msg, setMsg] = useState("");
-    const [visible, setVisible] = useState(false);
-    const [renderObj, setRenderObj] = useState(false);
-    const isFirstMount = React.useRef(true);
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    // Reacciona a los cambios de estado (incluye el montaje inicial con state='START')
-    useEffect(() => {
-        if (isFirstMount.current && state === 'START') {
-            isFirstMount.current = false;
-            // Solo mostramos mensaje inicial si realmente queremos. En este caso sí, pero de forma controlada.
-            // Para evitar el doble render si cambia inmediatamente, lo hacemos así:
-        }
+/** El padre lo monta con `key` distinta en cada evento, así cada reacción reinicia el componente. */
+export default function Supervisor({ mood }) {
+  const [quote] = useState(() => pick(QUOTES[mood] ?? QUOTES.START));
+  const [visible, setVisible] = useState(true);
 
-        let text = "";
-        if (state === 'START') text = random(QUOTES.start);
-        else if (state === 'GOOD') text = random(QUOTES.good);
-        else if (state === 'BAD') text = random(QUOTES.bad);
-        else if (state === 'COMBO') text = random(QUOTES.combo);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(false), 3800);
+    return () => clearTimeout(t);
+  }, []);
 
-        if (!text) return;
+  if (!visible) return null;
 
-        // Patrón intencional "toast al cambiar de prop": muestra un mensaje
-        // aleatorio del supervisor y lo auto-oculta tras 5s. La aleatoriedad y
-        // el temporizador hacen que deba vivir en un efecto que reacciona a las props.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMsg(text);
-        setVisible(true);
-        setRenderObj(true);
-        const timer = setTimeout(() => setVisible(false), 5000);
-        return () => clearTimeout(timer);
-    }, [state, score]);
-
-    // Cleanup tras fadeout
-    useEffect(() => {
-        if (!visible && renderObj) {
-            const timer = setTimeout(() => setRenderObj(false), 300); // match transition
-            return () => clearTimeout(timer);
-        }
-    }, [visible, renderObj]);
-
-    if (!renderObj) return null;
-
-    // Define color themes based on the doctor's reaction
-    const getReactionStyles = () => {
-        switch (state) {
-            case 'BAD':
-                return {
-                    border: 'border-rose-500/80',
-                    glow: 'shadow-[0_0_15px_rgba(244,63,94,0.4)]',
-                    textColor: 'text-rose-400',
-                    badge: 'bg-rose-950/80 text-rose-200 border-rose-500/30',
-                    bg: 'bg-slate-950/95 border-l-4 border-l-rose-500',
-                    indicator: 'bg-rose-500 animate-ping'
-                };
-            case 'GOOD':
-            case 'COMBO':
-                return {
-                    border: 'border-emerald-500/80',
-                    glow: 'shadow-[0_0_15px_rgba(16,185,129,0.35)]',
-                    textColor: 'text-emerald-400',
-                    badge: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/30',
-                    bg: 'bg-slate-950/95 border-l-4 border-l-emerald-500',
-                    indicator: 'bg-emerald-400 animate-pulse'
-                };
-            default:
-                return {
-                    border: 'border-cyan-500/70',
-                    glow: 'shadow-[0_0_12px_rgba(6,182,212,0.25)]',
-                    textColor: 'text-cyan-400',
-                    badge: 'bg-cyan-950/80 text-cyan-300 border-cyan-500/30',
-                    bg: 'bg-slate-950/95 border-l-4 border-l-cyan-500',
-                    indicator: 'bg-cyan-400 animate-pulse'
-                };
-        }
-    };
-
-    const styles = getReactionStyles();
-
-    return (
-        <div
-            key={msg}
-            className={`absolute top-[84px] right-4 z-50 flex items-start max-w-[210px] transition-all duration-300 ${
-                !visible ? 'opacity-0 scale-95 translate-y-[-10px]' : (state === 'BAD' ? 'shake-heavy opacity-100 scale-100' : 'animate-bounce-in opacity-100 scale-100')
-            }`}
-        >
-            {/* Speach bubble content */}
-            <div 
-                className={`glass p-3 rounded-tr-none rounded-br-2xl text-[11px] text-slate-100 shadow-2xl mr-2.5 relative leading-relaxed backdrop-blur-md ${styles.bg} ${styles.glow}`}
-            >
-                <div className="flex items-center justify-between gap-2 mb-1 border-b border-white/5 pb-1">
-                    <span className={`font-black uppercase tracking-wider text-[8px] ${styles.textColor}`}>
-                        Dr. Jaspers
-                    </span>
-                    <span className={`text-[7px] font-mono px-1 rounded border ${styles.badge} flex items-center gap-1`}>
-                        <span className={`w-1 h-1 rounded-full ${styles.indicator}`}></span>
-                        COMS LINK
-                    </span>
-                </div>
-                <p className="italic font-medium text-slate-200">
-                    "{msg}"
-                </p>
-                {/* Speech arrow pointing to doctor */}
-                <div className="absolute top-2.5 -right-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[8px] border-l-slate-950 border-b-[6px] border-b-transparent"></div>
-            </div>
-
-            {/* Doctor avatar circle */}
-            <div 
-                className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg bg-slate-900 flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-300 ${styles.border} ${styles.glow}`}
-            >
-                {state === 'BAD' ? '😡' : state === 'COMBO' ? '😎' : '👨‍⚕️'}
-            </div>
-        </div>
-    );
+  return (
+    <div
+      className={`absolute right-3 top-28 z-30 flex items-start gap-2 max-w-[240px] ${mood === 'BAD' ? 'anim-shake' : 'anim-rise'}`}
+      role="status"
+    >
+      <p className={`panel bg-slate-950/95 border-l-4 ${TONE[mood]} rounded-2xl rounded-tr-sm px-3 py-2 text-[13px] leading-snug text-slate-200`}>
+        <span className="block text-[11px] font-black uppercase tracking-wider text-slate-400">Dr. Jaspers</span>
+        {quote}
+      </p>
+      <span className="text-3xl leading-none" aria-hidden="true">{FACES[mood]}</span>
+    </div>
+  );
 }

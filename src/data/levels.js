@@ -1,3 +1,5 @@
+// Guardias del juego. `duration` en segundos, `spawnRate` en ms entre pacientes,
+// `beds` = camas de OBS, `uce` = camas de UCE, `goal` = puntaje para aprobar.
 export const LEVELS = [
   {
     id: 1,
@@ -89,14 +91,5 @@ export const LEVELS = [
   },
 ];
 
-export function getMealEmoji(mealName) {
-  if (mealName.includes("🌮")) return "🌮";
-  if (mealName.includes("🥪")) return "🥪";
-  if (mealName.includes("🍲")) return "🍲";
-  if (mealName.includes("🍛")) return "🍛";
-  if (mealName.includes("🌯")) return "🌯";
-  if (mealName.includes("🥘")) return "🥘";
-  if (mealName.includes("🦞")) return "🦞";
-  if (mealName.includes("🥂")) return "🥂";
-  return "😋";
-}
+/** Primer "palabra" de la comida (su emoji), para mostrarlo grande en el reporte. */
+export const mealEmoji = (meal) => meal.split(' ')[0];
