@@ -1,37 +1,61 @@
 import { useEffect, useState } from 'react';
 import { mealEmoji } from '../data/levels';
-import { playError, playSuccess, playTone } from '../utils/audio';
+import { playFail, playStamp, playSuccess, playTick } from '../utils/audio';
+import { vibrateError, vibrateSuccess } from '../utils/haptics';
 
 const TICK_MS = 1100;
+const CONFETTI_COLORS = ['#2dd4bf', '#fbbf24', '#fb7185', '#38bdf8', '#a78bfa', '#f8fafc'];
 
 export default function ReportScreen({ level, score, isLast, onNext, onRetry }) {
   const success = score >= level.goal;
   const [shown, setShown] = useState(0);
   const [stamped, setStamped] = useState(false);
 
-  // Contador animado del puntaje y después el sello.
+  // Confeti solo si aprobó. Posiciones aleatorias fijadas al montar.
+  const [confetti] = useState(() =>
+    success
+      ? Array.from({ length: 36 }, (_, i) => ({
+          left: Math.random() * 100,
+          dx: `${(Math.random() - 0.5) * 120}px`,
+          rot: `${Math.random() * 720 - 360}deg`,
+          dur: `${2.2 + Math.random() * 1.6}s`,
+          delay: `${TICK_MS / 1000 + 0.3 + Math.random() * 0.5}s`,
+          color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        }))
+      : [],
+  );
+
+  // Contador animado del puntaje con "tic" de caja registradora; después, sello y fanfarria.
   useEffect(() => {
     let raf;
-    let stampTimer;
+    let lastTick = 0;
+    const timers = [];
     const t0 = performance.now();
     const step = (now) => {
       const k = Math.min((now - t0) / TICK_MS, 1);
-      const eased = 1 - (1 - k) ** 2;
+      const eased = 1 - (1 - k) ** 3;
       setShown(Math.round(eased * Math.max(score, 0)));
+      if (now - lastTick > 70 && k < 1) {
+        playTick();
+        lastTick = now;
+      }
       if (k < 1) {
         raf = requestAnimationFrame(step);
       } else {
-        stampTimer = setTimeout(() => {
-          setStamped(true);
-          (success ? playSuccess : playError)();
-        }, 150);
+        timers.push(
+          setTimeout(() => {
+            setStamped(true);
+            playStamp();
+            (success ? vibrateSuccess : vibrateError)();
+          }, 150),
+          setTimeout(success ? playSuccess : playFail, 450),
+        );
       }
     };
-    playTone(600, 'triangle', 0.05, 0.03);
     raf = requestAnimationFrame(step);
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(stampTimer);
+      timers.forEach(clearTimeout);
     };
   }, [score, success]);
 
@@ -66,7 +90,7 @@ export default function ReportScreen({ level, score, isLast, onNext, onRetry }) 
           </span>
           {success ? (
             <>
-              <div className="text-6xl mb-3">{mealEmoji(level.meal)}</div>
+              <div className={`text-6xl mb-3 ${stamped ? 'anim-pop' : 'opacity-0'}`}>{mealEmoji(level.meal)}</div>
               <p className="font-extrabold text-lg">{level.meal.replace(/^\S+\s/, '')}</p>
               <p className="text-xs text-obs mt-3 rounded-lg bg-obs/10 border border-obs/30 px-3 py-2 inline-block">{level.premio}</p>
             </>
@@ -80,6 +104,15 @@ export default function ReportScreen({ level, score, isLast, onNext, onRetry }) 
         </div>
 
       </section>
+
+      {confetti.map((c, i) => (
+        <span
+          key={i}
+          className="confetti"
+          aria-hidden="true"
+          style={{ left: `${c.left}%`, background: c.color, '--dx': c.dx, '--rot': c.rot, '--dur': c.dur, '--delay': c.delay }}
+        />
+      ))}
 
       <div className="space-y-3">
         <button onClick={onNext} className="btn btn-primary w-full text-lg">

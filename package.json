@@ -1,9 +1,9 @@
 {
   "name": "triage-tycoon",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
-  "homepage": "https://pataforista.github.io/triagemovil/",
+  "homepage": "https://triagemoviljuego.pages.dev/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

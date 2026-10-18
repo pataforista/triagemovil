@@ -9,7 +9,7 @@
 > la CI falla si cambia la app sin que cambie este archivo, un hook de Claude Code impide cerrar una sesión
 > en el mismo caso, y `CLAUDE.md` lo exige como primera instrucción.
 
-Última actualización: **2026-10-18** · versión `2.1.0`
+Última actualización: **2026-10-18** · versión `2.2.0`
 
 ---
 
@@ -59,10 +59,11 @@ src/
 │   ├── PatientCard.jsx      Tarjeta de paciente + 3 botones de decisión
 │   ├── Ward.jsx             Monitor de camas OBS / UCE
 │   ├── Supervisor.jsx       Dr. Jaspers: reacción sarcástica a cada decisión
+│   ├── SoundToggle.jsx      Botón 🔊/🔇 (portada y pausa); guarda la preferencia
 │   ├── ReportScreen.jsx     Resultado de la guardia, sello, repetir / siguiente
 │   └── EndScreen.jsx        Fin de la residencia
 └── utils/
-    ├── audio.js             Sonidos sintetizados (Web Audio, sin archivos)
+    ├── audio.js             Motor de sonido sintetizado (Web Audio, sin archivos) + silencio
     └── haptics.js           Vibración (navigator.vibrate)
 tests/rules.test.js          Pruebas de rules.js, vitals.js y el generador
 scripts/check-roadmap.mjs    Verificador de este documento (CI + hook)
@@ -81,6 +82,7 @@ INTRO ──Iniciar──▶ GAME ──tiempo = 0──▶ REPORT ──Siguien
 ```
 
 - `App.jsx` guarda en `localStorage`: `triage_phase`, `triage_level_index`, `triage_last_score`.
+  `audio.js` guarda `triage_muted` (`'1'` = silencio).
   Todo acceso va en `try/catch` (modo privado no rompe el juego). Valores inválidos vuelven a `INTRO` / nivel 0.
 - Reprobar **no** bloquea el avance: el jugador puede seguir o repetir la guardia.
 - `GameScreen` se monta con `key={level.id}`; cambiar de nivel o repetir reinicia todo su estado.
@@ -91,8 +93,9 @@ INTRO ──Iniciar──▶ GAME ──tiempo = 0──▶ REPORT ──Siguien
 - Otro `setInterval` (cada `level.spawnRate` ms) agrega pacientes; máximo 10 en espera.
 - El primer paciente aparece al instante.
 - Pausa manual o **automática** al ocultarse la app (`visibilitychange`). En pausa se detienen reloj,
-  llegadas, sonido ambiente y botones.
-- Al llegar a 0 s se llama `onFinish(score)` una sola vez (guardado por `useRef`).
+  llegadas, pitidos de monitor y botones; el botón de silencio aparece en la pausa.
+- Al llegar a 0 s suena el silbato y, 700 ms después, se llama `onFinish(score)` una sola vez (guardado por `useRef`).
+- Al decidir, la tarjeta se marca `exiting` (anima su salida) y se retira a los 300 ms; no cuenta para el tope de 10.
 
 ## 5. Reglas del juego
 
@@ -168,7 +171,52 @@ Los colores de triage están en `:root` (`index.css`) **y** en `tailwind.config.
 Si cambias uno, cambia ambos.
 
 Componentes CSS (`@layer components` en `index.css`): `.panel`, `.btn` + `.btn-primary | -ghost | -alta |
--obs | -uce`, `.eyebrow`, `.mono`, `.toast`. Animaciones: `anim-rise`, `anim-shake`, `anim-stamp`, `anim-beat`.
+-obs | -uce`, `.eyebrow`, `.mono`, `.toast`.
+
+### Animaciones (`index.css`)
+
+Curvas compartidas: `--ease-out` y `--ease-spring`. Todas duran < 0.5 s salvo el confeti y los bucles indicados.
+
+| Clase | Dónde | Qué hace |
+| --- | --- | --- |
+| `anim-card-in` | `PatientCard` | El paciente entra desde la derecha con leve rebote |
+| `card-exit-ALTA / -OBS / -UCE` | `PatientCard` | Salida según la decisión: ALTA a la izquierda, OBS hacia abajo, UCE con halo rojo. Dura `EXIT_MS` (300 ms) en `GameScreen` |
+| `screen-flash-ok / -bad` | `GameScreen` | Destello de borde verde o rojo tras cada decisión |
+| `anim-shake` | Cabecera del juego, Dr. Jaspers | Temblor en cada error |
+| `urgent-vignette` | `GameScreen` | Viñeta roja que late en los últimos 10 s (`URGENT_SECONDS`) |
+| `anim-bump` | Marcador, reloj urgente | Rebote al cambiar el número |
+| `float-points` | Marcador | Los puntos ganados o perdidos suben y se desvanecen |
+| `bar-goal` | Barra de progreso | Brillo dorado en bucle al alcanzar la meta |
+| `anim-pop` | Camas, racha, comida del reporte | Aparición con rebote |
+| `anim-stamp` | Reporte | Sello APROBADO / REPROBADO con desenfoque inicial |
+| `confetti` | Reporte (solo si aprueba) | 36 piezas con posición, giro y retraso aleatorios |
+| `anim-ecg` | Portada | Trazo de ECG que se dibuja en bucle |
+| `anim-rise`, `toast` | Pantallas, avisos | Entrada suave; aviso inferior de 2.6 s |
+
+Reglas: las claves (`key`) que fuerzan reinicio de animación llevan prefijo (`hdr-`, `sup-`, `score-`…).
+Dos hermanos con la misma `key` hacen que React duplique elementos.
+
+### Sonido (`src/utils/audio.js`)
+
+Todo es síntesis con Web Audio: osciladores y ruido filtrado. Pasa por un bus maestro (ganancia + compresor)
+que también aplica el silencio.
+
+| Función | Cuándo suena | Carácter |
+| --- | --- | --- |
+| `playArrival` | Llega un paciente | "Ding-dong" muy suave |
+| `playMonitor(urgent)` | Cada 2 s; cada 1 s y más agudo en los últimos 10 s | Pitido de monitor cardíaco |
+| `playCorrect(combo)` | Acierto | Dos notas ascendentes; sube medio tono por acierto en racha (tope: una octava) |
+| `playError` | Error | Zumbido grave que cae |
+| `playCritical` | Mandar a casa a un paciente de UCE | Alarma de tres pitidos |
+| `playBlocked` | Cama llena | Golpe sordo |
+| `playBreath` | Regalo de +15 s | Suspiro con "whoosh" |
+| `playGoal` | Se alcanza la meta | Arpegio brillante |
+| `playWhistle` | Se acaba el tiempo | Silbato (el reporte aparece 700 ms después) |
+| `playTick`, `playStamp` | Reporte | Contador tipo caja registradora y golpe del sello |
+| `playSuccess` / `playFail` | Reporte | Fanfarria o "wah-wah" de trombón triste |
+| `playPop` | Botones de interfaz | Clic corto |
+
+El sonido de fondo continuo (zumbido de 65 Hz) se eliminó: cansaba y gastaba batería.
 
 Reglas de diseño que no se negocian:
 - **La tarjeta del paciente es neutra.** Ningún color, borde o icono puede delatar la respuesta.
@@ -181,18 +229,18 @@ Reglas de diseño que no se negocian:
 
 - `vite.config.js` → `vite-plugin-pwa` con `registerType: 'autoUpdate'`. Precachea JS, CSS, HTML e íconos
   (~300 KB). `logo.jpg` se excluye: solo sirve para previsualizaciones en redes.
-- `start_url` y `scope` son `'.'` para funcionar en la raíz y bajo subruta.
+- `start_url` y `scope` son `'.'` (relativos al manifest).
 - `public/_headers`: reglas de caché para Cloudflare Pages (SW y manifest sin caché; `/assets/*` inmutable).
 
-| Destino | Cómo se publica | Base |
-| --- | --- | --- |
-| GitHub Pages | `.github/workflows/deploy.yml` en cada push a `main` | `BASE_PATH=/triagemovil/` |
-| Cloudflare Pages | Integración de Cloudflare con el repo (`wrangler.toml`, salida `dist`) | `/` (sin `BASE_PATH`) |
+**Sitio oficial: Cloudflare Pages → https://triagemoviljuego.pages.dev/** (confirmado por el dueño el 2026-10-18).
 
-**Pendiente de confirmar:** cuál de los dos es el sitio oficial. `index.html` (canonical, Open Graph),
-`sitemap.xml` y `robots.txt` apuntan a GitHub Pages; otro repo enlaza a `triagemoviljuego.pages.dev`, y
-`wrangler.toml` usa el nombre `triagemovil`. Insufficient data para decidirlo desde el código; revisar el
-panel de Cloudflare y unificar las URLs.
+- Cloudflare construye desde el repo con `npm run build` y publica `dist/` (`wrangler.toml`). Base `/`.
+- `index.html` (canonical, Open Graph, Twitter), `public/sitemap.xml`, `public/robots.txt` y
+  `package.json#homepage` apuntan a esa URL. Si el dominio cambia, se actualizan los cinco a la vez.
+- GitHub Pages ya no se usa: se eliminó `.github/workflows/deploy.yml`.
+- `BASE_PATH` sigue soportado en `vite.config.js` por si algún día se publica bajo una subruta.
+- `wrangler.toml` usa `name = "triagemovil"` y el proyecto vive en `triagemoviljuego`. Insufficient data
+  sobre si importa: con la integración de Git, Cloudflare toma el proyecto del panel. Revisar si falla un build.
 
 ## 9. Calidad y cumplimiento del roadmap
 
@@ -213,11 +261,10 @@ plantilla de PR siguen siendo necesarias.
 ## 10. Pendientes y próximos pasos
 
 Prioridad alta
-- [ ] Confirmar el destino oficial de despliegue y unificar canonical / OG / sitemap (§8).
 - [ ] Revisión clínica de los 164 casos por un médico (exactitud de destinos y signos vitales).
 
 Prioridad media
-- [ ] Botón de silencio (sonido) persistente.
+- [ ] Control de volumen (además de silencio) y vibración desactivable.
 - [ ] Récord por guardia en `localStorage` y pantalla de estadísticas (aciertos por categoría, trampas).
 - [ ] Revisión final de la guardia: lista de diagnósticos vistos con su destino correcto.
 - [ ] Balancear metas con datos reales de partidas (hoy son estimaciones).
@@ -230,6 +277,29 @@ Prioridad baja
 ## 11. Bitácora de cambios
 
 Formato: fecha · versión · resumen. La entrada más reciente va arriba.
+
+### 2026-10-18 · 2.2.0 · Animaciones, sonido y despliegue en Cloudflare
+**Despliegue**
+- Sitio oficial: Cloudflare Pages (`triagemoviljuego.pages.dev`). Canonical, OG, sitemap, robots y `homepage` actualizados.
+- Eliminado `deploy.yml` (GitHub Pages). Resuelto el pendiente "confirmar destino oficial".
+
+**Sonido** (§7, "Sonido")
+- Motor nuevo con bus maestro y compresor; ruido filtrado para golpes.
+- 14 efectos con intención clínica o de juego: llegada, monitor, acierto con tono ascendente por racha, error,
+  error crítico, cama llena, piedad, meta, silbato, contador, sello, fanfarria y trombón triste.
+- Botón de silencio persistente (`SoundToggle`, `triage_muted`) en portada y pausa. Resuelto el pendiente.
+- Eliminado el zumbido de fondo continuo.
+
+**Animaciones** (§7, "Animaciones")
+- Entrada y salida de tarjetas según la decisión, destello verde/rojo, temblor de cabecera en errores,
+  puntos flotantes, rebote del marcador, viñeta de urgencia en los últimos 10 s, brillo de barra al llegar a
+  la meta, pop de camas, trazo de ECG en portada, sello con desenfoque y confeti al aprobar.
+- La meta alcanzada se anuncia durante la guardia (aviso, sonido y vibración).
+- El reporte aparece 700 ms después del silbato.
+
+**Bugs**
+- Claves duplicadas entre la cabecera y Dr. Jaspers apilaban cabeceras; ahora todas llevan prefijo.
+- El aviso se movió abajo; ya no lo tapa la burbuja del supervisor.
 
 ### 2026-10-18 · 2.1.0 · Optimización, rediseño y roadmap
 **Bugs corregidos**

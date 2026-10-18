@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SoundToggle from './SoundToggle';
 import TutorialModal from './TutorialModal';
 import { playPop, playSuccess } from '../utils/audio';
 import { vibratePop, vibrateSuccess } from '../utils/haptics';
@@ -13,6 +14,7 @@ function EcgMark() {
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="anim-ecg"
       />
     </svg>
   );
@@ -34,9 +36,10 @@ export default function IntroScreen({ level, hasProgress, onStart, onReset }) {
   };
 
   return (
-    <main className="flex-1 flex flex-col justify-center px-6 py-8 gap-8 anim-rise">
+    <main className="flex-1 flex flex-col justify-center px-6 py-8 gap-8 anim-rise relative">
+      <SoundToggle className="absolute top-4 right-4" />
       <header className="flex flex-col items-center text-center gap-3">
-        <div className="anim-beat"><EcgMark /></div>
+        <EcgMark />
         <h1 className="text-5xl font-black tracking-tight leading-none">
           Triage <span className="text-sky-400">Tycoon</span>
         </h1>

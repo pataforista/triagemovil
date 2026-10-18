@@ -19,13 +19,13 @@ export default function Ward({ area, beds }) {
         {beds.map((b, i) => (
           <div
             key={i}
-            className={`relative w-11 h-11 rounded-lg border flex items-center justify-center overflow-hidden ${
+            className={`relative w-11 h-11 rounded-lg border transition-colors duration-300 flex items-center justify-center overflow-hidden ${
               b ? t.fill : 'border-dashed border-white/10'
             }`}
           >
             {b ? (
               <>
-                <span className={`font-black ${t.text}`}>{b.initial}</span>
+                <span key={b.id} className={`font-black ${t.text} anim-pop`}>{b.initial}</span>
                 <span
                   className={`absolute bottom-0 left-0 h-1 ${t.bar} transition-[width] duration-1000 ease-linear`}
                   style={{ width: `${(b.timeLeft / b.maxTime) * 100}%` }}

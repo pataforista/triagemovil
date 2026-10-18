@@ -105,16 +105,92 @@ body {
   .btn-uce { background: linear-gradient(160deg, #be123c, #f43f5e); }
 }
 
-/* --- Animaciones (todas cortas; se anulan con "reducir movimiento") --- */
+/* --- Animaciones (cortas, con curvas "spring"; se anulan con "reducir movimiento") --- */
+:root {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
-.anim-rise { animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-rise { animation: rise 0.35s var(--ease-out) both; }
+
+/* Llegada de paciente: entra desde la derecha con un leve rebote. */
+@keyframes card-in {
+  0% { opacity: 0; transform: translateX(40px) scale(0.96); }
+  70% { opacity: 1; transform: translateX(-4px) scale(1); }
+  100% { opacity: 1; transform: none; }
+}
+.anim-card-in { animation: card-in 0.45s var(--ease-out) both; }
+
+/* Salida según la decisión: ALTA se va a la izquierda (puerta), OBS hacia abajo (camas), UCE sube y se ilumina. */
+@keyframes out-alta { to { opacity: 0; transform: translateX(-110%) rotate(-4deg); } }
+@keyframes out-obs  { to { opacity: 0; transform: translateY(60px) scale(0.85); } }
+@keyframes out-uce  { 40% { transform: scale(1.03); } to { opacity: 0; transform: translateY(40px) scale(0.8); } }
+.card-exit { pointer-events: none; }
+.card-exit-ALTA { animation: out-alta 0.28s ease-in forwards; box-shadow: 0 0 0 2px var(--alta); }
+.card-exit-OBS  { animation: out-obs 0.28s ease-in forwards; box-shadow: 0 0 0 2px var(--obs); }
+.card-exit-UCE  { animation: out-uce 0.3s ease-in forwards; box-shadow: 0 0 0 2px var(--uce), 0 0 30px -4px var(--uce); }
+
+/* Destello de pantalla tras cada decisión. */
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+.screen-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  animation: flash 0.45s ease-out forwards;
+}
+.screen-flash-ok { background: radial-gradient(circle at 50% 40%, transparent 40%, rgba(45, 212, 191, 0.22)); }
+.screen-flash-bad { background: radial-gradient(circle at 50% 40%, transparent 30%, rgba(251, 113, 133, 0.35)); }
+
+/* Viñeta roja que late en los últimos segundos. */
+@keyframes vignette { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+.urgent-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 34;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px -10px rgba(251, 113, 133, 0.6);
+  animation: vignette 1s ease-in-out infinite;
+}
+
+/* Rebote del marcador al cambiar. */
+@keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.anim-bump { display: inline-block; animation: bump 0.35s var(--ease-spring); }
+
+/* Pop genérico (camas, insignias). */
+@keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.anim-pop { animation: pop 0.3s var(--ease-spring) both; }
+
+/* Puntos flotantes que suben desde el marcador. */
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  20% { opacity: 1; transform: translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-28px) scale(1); }
+}
+.float-points {
+  position: absolute;
+  left: 0;
+  top: -22px;
+  font-weight: 900;
+  pointer-events: none;
+  animation: float-up 0.9s var(--ease-out) forwards;
+}
+
+/* Brillo de la barra de progreso cuando se alcanza la meta. */
+@keyframes shine { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.bar-goal {
+  background: linear-gradient(90deg, #14b8a6 0%, #5eead4 45%, #fef08a 50%, #5eead4 55%, #14b8a6 100%);
+  background-size: 200% 100%;
+  animation: shine 1.6s linear infinite;
+}
 
 @keyframes toast {
-  0% { opacity: 0; transform: translate(-50%, -8px); }
-  12%, 80% { opacity: 1; transform: translate(-50%, 0); }
+  0% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
+  10%, 82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -6px); }
 }
 .toast {
@@ -128,7 +204,7 @@ body {
   font-size: 0.875rem;
   font-weight: 700;
   text-align: center;
-  background: rgba(5, 11, 24, 0.94);
+  background: rgba(5, 11, 24, 0.96);
   border: 1px solid var(--border);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
   animation: toast 2.6s ease forwards;
@@ -137,23 +213,43 @@ body {
 
 @keyframes shake {
   0%, 100% { transform: none; }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
 }
-.anim-shake { animation: shake 0.3s ease; }
+.anim-shake { animation: shake 0.35s ease; }
 
 @keyframes stamp {
-  0% { opacity: 0; transform: scale(2.4) rotate(-20deg); }
+  0% { opacity: 0; transform: scale(2.6) rotate(-22deg); filter: blur(4px); }
+  70% { opacity: 1; transform: scale(0.94) rotate(-5deg); filter: none; }
   100% { opacity: 1; transform: scale(1) rotate(-6deg); }
 }
-.anim-stamp { animation: stamp 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+.anim-stamp { animation: stamp 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
 
-@keyframes beat {
-  0%, 100% { transform: scale(1); }
-  15% { transform: scale(1.15); }
-  30% { transform: scale(0.97); }
+/* Trazo de ECG que se dibuja en bucle (portada). */
+@keyframes ecg-draw {
+  0% { stroke-dashoffset: 260; }
+  60% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -260; }
 }
-.anim-beat { animation: beat 1.2s ease-in-out infinite; }
+.anim-ecg { stroke-dasharray: 260; animation: ecg-draw 2.4s ease-in-out infinite; }
+
+/* Confeti de la pantalla de reporte. */
+@keyframes confetti {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0); opacity: 1; }
+  100% { transform: translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity: 0.8; }
+}
+.confetti {
+  position: fixed;
+  top: 0;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  z-index: 60;
+  pointer-events: none;
+  animation: confetti var(--dur) cubic-bezier(0.3, 0.5, 0.6, 1) var(--delay) both;
+}
 
 .no-scrollbar { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .no-scrollbar::-webkit-scrollbar { display: none; }

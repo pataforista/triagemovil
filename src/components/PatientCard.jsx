@@ -1,5 +1,4 @@
 import { parseVitals } from '../game/vitals';
-import { playPop } from '../utils/audio';
 
 const STATUS = {
   danger: 'border-uce/40 bg-uce/10 text-uce',
@@ -18,7 +17,7 @@ export default function PatientCard({ patient, onAssign, disabled }) {
   const vitals = parseVitals(patient.vitals);
 
   return (
-    <article className="panel p-4 mb-3 anim-rise">
+    <article className={`panel p-4 mb-3 ${patient.exiting ? `card-exit card-exit-${patient.exiting}` : 'anim-card-in'}`}>
       <header className="flex items-start gap-3">
         <div className="text-4xl leading-none" aria-hidden="true">{patient.sprite}</div>
         <div className="min-w-0 flex-1">
@@ -44,11 +43,8 @@ export default function PatientCard({ patient, onAssign, disabled }) {
         {ACTIONS.map((a) => (
           <button
             key={a.key}
-            disabled={disabled}
-            onClick={() => {
-              playPop();
-              onAssign(patient, a.key);
-            }}
+            disabled={disabled || Boolean(patient.exiting)}
+            onClick={() => onAssign(patient, a.key)}
             className={`btn ${a.className} px-0 text-sm disabled:opacity-40`}
           >
             <span aria-hidden="true">{a.icon}</span> {a.key}
